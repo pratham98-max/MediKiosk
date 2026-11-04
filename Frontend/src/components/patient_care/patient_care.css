@@ -1835,3 +1835,549 @@
   border-radius: 6px;
   transition: width 0.4s ease;
 }
+
+/* =============================================================================
+   ENHANCED VIEW DETAILS (UNIFIED PATIENT PROFILE MODAL) CLINICAL DASHBOARD
+   Matches reference_patient_care/templates/patient_detail.html 2-column layout
+   ============================================================================= */
+
+.unified-profile-window {
+  max-width: 1240px !important;
+  width: 96vw !important;
+  max-height: 94vh !important;
+  border-radius: 14px;
+}
+
+.pc-detail-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .pc-detail-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Clinical Cards */
+.pc-clinical-card {
+  background: #ffffff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.pc-clinical-card:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.pc-card-header {
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+}
+
+.pc-card-header h5,
+.pc-card-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+}
+
+.pc-card-header.header-primary {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+}
+
+.pc-card-header.header-teal {
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+}
+
+.pc-card-header.header-warning {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: #ffffff;
+}
+
+.pc-card-header.header-info {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+}
+
+.pc-card-header.header-dark {
+  background: linear-gradient(135deg, #1e293b, #334155);
+}
+
+.pc-card-header.header-danger {
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+}
+
+.pc-card-header.header-success {
+  background: linear-gradient(135deg, #15803d, #16a34a);
+}
+
+.pc-card-body {
+  padding: 18px;
+}
+
+/* Patient Avatar & Demographics (Section 1) */
+.pc-patient-avatar-box {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.pc-patient-avatar-circle {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+  margin-bottom: 10px;
+}
+
+.pc-patient-name-title {
+  margin: 0 0 4px 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+
+.pc-patient-id-sub {
+  color: var(--ink-soft, #64748b);
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.pc-meta-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pc-meta-col {
+  flex: 1;
+}
+
+.pc-meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-soft, #64748b);
+  margin-bottom: 2px;
+}
+
+.pc-meta-val {
+  font-size: 13px;
+  color: var(--ink, #0f172a);
+}
+
+.pc-meta-divider {
+  border: none;
+  border-top: 1px solid var(--line, #e2e8f0);
+  margin: 14px 0;
+}
+
+/* Badges */
+.pc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-triage-1 {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.badge-triage-2 {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-triage-3 {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-triage-4,
+.badge-triage-5 {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-info {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Vital Signs Grid (Section 2) */
+.pc-vital-boxes-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .pc-vital-boxes-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.pc-vital-box {
+  border-radius: 8px;
+  padding: 12px 6px;
+  text-align: center;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 90px;
+}
+
+.pc-vital-box:hover {
+  transform: translateY(-2px);
+}
+
+.pc-vital-box h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pc-vital-box small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.pc-vital-box .vital-unit {
+  font-size: 10px;
+  opacity: 0.8;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.vital-box-normal {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.vital-box-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.vital-box-danger {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+/* Vitals Action Bar */
+.pc-vitals-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.pc-vitals-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* MEWS Score & Explanation (Section 3) */
+.pc-mews-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .pc-mews-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pc-mews-score-col {
+  text-align: center;
+  padding-right: 10px;
+  border-right: 1px solid var(--line, #e2e8f0);
+}
+
+@media (max-width: 600px) {
+  .pc-mews-score-col {
+    border-right: none;
+    border-bottom: 1px solid var(--line, #e2e8f0);
+    padding-bottom: 12px;
+  }
+}
+
+.pc-mews-big-number {
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pc-mews-score-label {
+  font-size: 12px;
+  color: var(--ink-soft, #64748b);
+  margin-top: 4px;
+}
+
+.pc-alert-box {
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.alert-box-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.alert-box-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.alert-box-danger {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+.alert-box-info {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+}
+
+/* Discharge Readiness (Section 5) */
+.pc-discharge-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 768px) {
+  .pc-discharge-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pc-criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pc-criteria-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.criteria-met {
+  background: #f0fdf4;
+  color: #166534;
+  border-left: 3px solid #22c55e;
+}
+
+.criteria-unmet {
+  background: #fef2f2;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+}
+
+.pc-criteria-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.criteria-met .pc-criteria-badge {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.criteria-unmet .pc-criteria-badge {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Progress bar */
+.pc-progress-track {
+  height: 16px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.pc-progress-fill {
+  height: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  transition: width 0.5s ease;
+}
+
+.progress-fill-success {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.progress-fill-warning {
+  background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+
+.progress-fill-danger {
+  background: linear-gradient(90deg, #b91c1c, #dc2626);
+}
+
+.progress-fill-info {
+  background: linear-gradient(90deg, #0284c7, #0ea5e9);
+}
+
+/* Sub-grid 2 columns for History & Care Plan (Sections 6 & 7) */
+.pc-two-subcol-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .pc-two-subcol-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pc-careplan-preview {
+  background: #f8fafc;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.pc-careplan-item {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Real-Time ECG Oscilloscope (Section 9) */
+.pc-ecg-canvas-container {
+  background: #04100c;
+  border: 1px solid #134e4a;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pc-ecg-canvas {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+.pc-ecg-stat-tile {
+  background: #f8fafc;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 6px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.pc-ecg-stat-tile h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--teal-deep, #0f766e);
+}
+
+.pc-ecg-stat-tile small {
+  font-size: 11px;
+  color: var(--ink-soft, #64748b);
+}

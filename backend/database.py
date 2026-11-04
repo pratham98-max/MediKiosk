@@ -3448,7 +3448,8 @@ def get_patient_unified_profile(patient_id: str) -> Optional[Dict[str, Any]]:
         # 1. Patient Demographics (strip password_hash and salt)
         cur.execute("""
             SELECT patient_id, full_name, email, phone, age, gender, created_at,
-                   triage_level, discharge_ready, needs_icu, assigned_bed
+                   triage_level, discharge_ready, needs_icu, assigned_bed,
+                   comorbidities, medical_history
             FROM patients
             WHERE patient_id = ?
         """, (patient_id,))

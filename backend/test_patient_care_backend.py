@@ -39,7 +39,7 @@ def record_test(test_id: str, description: str, passed: bool, notes: str = ""):
         results["failed"] += 1
         status_str = "[FAIL]"
     
-    print(f"{status_str} {test_id}: {description} {f'({notes})' if notes else ''}")
+    print(f"{status_str} {test_id}: {description} {f'({notes})' if notes else ''}", flush=True)
     results["details"].append({
         "id": test_id,
         "description": description,

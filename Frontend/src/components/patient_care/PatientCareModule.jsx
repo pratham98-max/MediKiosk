@@ -1777,6 +1777,13 @@ export default function PatientCareModule({
           patientId={activePatient.patient_id}
           currentStaff={currentStaff}
           onClose={closeModal}
+          onActionTrigger={(action, p) => {
+            if (action === "discharged" || action === "icu_upgraded" || action === "vitals_saved" || action === "bed_updated") {
+              loadData();
+            } else if (action === "vitals" || action === "xai" || action === "ecg" || action === "bed" || action === "carePlans" || action === "transfer") {
+              openModal(action, p || activePatient);
+            }
+          }}
         />
       )}
 
