@@ -29,6 +29,7 @@ build/
 uploads/
 temp/
 tmp/
+reference_patient_care/
 
 # Logs
 *.log

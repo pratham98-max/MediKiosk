@@ -558,7 +558,7 @@
   border-radius: 14px;
   width: 100%;
   max-width: 820px;
-  max-height: 92vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -566,9 +566,35 @@
   animation: modalSlide 0.2s ease-out;
 }
 
+.pc-modal-window>form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pc-modal-window .pc-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pc-modal-window .pc-modal-footer {
+  flex-shrink: 0;
+}
+
 @keyframes modalSlide {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .pc-modal-header {
@@ -840,9 +866,17 @@
   transition: width 0.5s ease;
 }
 
-.risk-low { background: #3f7457; }
-.risk-moderate { background: #e2a400; }
-.risk-critical { background: #b8452f; }
+.risk-low {
+  background: #3f7457;
+}
+
+.risk-moderate {
+  background: #e2a400;
+}
+
+.risk-critical {
+  background: #b8452f;
+}
 
 .xai-factors-list {
   margin: 14px 0 0 0;
@@ -889,4 +923,915 @@
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   PHASE 2: ADMITTED PATIENT DASHBOARD REDESIGN (SCOPED UNDER .admitted-care-dashboard)
+   Strictly reproduces original standalone Patient Care experience without CSS leakage
+   ========================================================================== */
+
+.admitted-care-dashboard {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #212529;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding: 16px 24px 48px;
+  box-sizing: border-box;
+}
+
+/* 1. INTERNAL BLUE NAVIGATION BAR (Recreated from base.html) */
+.admitted-care-dashboard .pc-subnav {
+  background: #0d6efd;
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admitted-care-dashboard .pc-subnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.admitted-care-dashboard .pc-subnav-brand-icon {
+  font-size: 1.3rem;
+}
+
+.admitted-care-dashboard .pc-subnav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admitted-care-dashboard .pc-subnav-btn {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.admitted-care-dashboard .pc-subnav-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.admitted-care-dashboard .pc-subnav-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.9);
+}
+
+.admitted-care-dashboard .pc-subnav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admitted-care-dashboard .pc-subnav-tag {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 2. SIX ORIGINAL KPI CARDS (Recreated from dashboard.html top row) */
+.admitted-care-dashboard .pc-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .admitted-care-dashboard .pc-kpi-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admitted-care-dashboard .pc-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.admitted-care-dashboard .pc-kpi-card {
+  border-radius: 10px;
+  padding: 16px 18px;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 90px;
+  box-sizing: border-box;
+}
+
+.admitted-care-dashboard .pc-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.admitted-care-dashboard .kpi-primary {
+  background: #0d6efd;
+  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+}
+
+.admitted-care-dashboard .kpi-success {
+  background: #198754;
+  background: linear-gradient(135deg, #198754, #146c43);
+}
+
+.admitted-care-dashboard .kpi-danger {
+  background: #dc3545;
+  background: linear-gradient(135deg, #dc3545, #b02a37);
+}
+
+.admitted-care-dashboard .kpi-warning {
+  background: #ffc107;
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #212529 !important;
+}
+
+.admitted-care-dashboard .kpi-info {
+  background: #0dcaf0;
+  background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
+  color: #212529 !important;
+}
+
+.admitted-care-dashboard .kpi-dark {
+  background: #212529;
+  background: linear-gradient(135deg, #212529, #1a1e21);
+}
+
+.admitted-care-dashboard .kpi-content h4 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.admitted-care-dashboard .kpi-content p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.92;
+  font-weight: 500;
+}
+
+.admitted-care-dashboard .kpi-icon {
+  font-size: 32px;
+  opacity: 0.85;
+}
+
+/* 3. TWO-COLUMN MAIN DASHBOARD LAYOUT */
+.admitted-care-dashboard .pc-dashboard-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .admitted-care-dashboard .pc-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CARDS COMMON STYLES */
+.admitted-care-dashboard .pc-card {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.admitted-care-dashboard .pc-card-header {
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.admitted-care-dashboard .pc-card-header h5,
+.admitted-care-dashboard .pc-card-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admitted-care-dashboard .pc-card-body {
+  padding: 18px 20px;
+}
+
+/* Left Column Card Variations */
+.admitted-care-dashboard .card-border-danger {
+  border: 1px solid #f5c2c7;
+}
+
+.admitted-care-dashboard .card-header-danger {
+  background: #dc3545;
+  color: #ffffff;
+}
+
+.admitted-care-dashboard .card-border-info {
+  border: 1px solid #b6effb;
+}
+
+.admitted-care-dashboard .card-header-info {
+  background: #0dcaf0;
+  color: #212529;
+}
+
+.admitted-care-dashboard .card-header-dark {
+  background: #212529;
+  color: #ffffff;
+}
+
+.admitted-care-dashboard .card-header-primary {
+  background: #0d6efd;
+  color: #ffffff;
+}
+
+/* Critical Alerts List Items */
+.admitted-care-dashboard .pc-alert-item {
+  background: #fff5f5;
+  border: 1px solid #f5c2c7;
+  border-left: 4px solid #dc3545;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+}
+
+.admitted-care-dashboard .pc-alert-item:hover {
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.12);
+}
+
+.admitted-care-dashboard .pc-alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.admitted-care-dashboard .pc-alert-name {
+  font-weight: 700;
+  color: #842029;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admitted-care-dashboard .pc-alert-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.admitted-care-dashboard .pc-alert-explanation {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #f8d7da;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #58151c;
+  line-height: 1.5;
+  margin: 8px 0;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.admitted-care-dashboard .pc-alert-meta {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+.admitted-care-dashboard .pc-alert-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Smart Bed Status Grid inside Card */
+.admitted-care-dashboard .bed-status-boxes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admitted-care-dashboard .bed-stat-box {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.admitted-care-dashboard .bed-stat-box h5 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admitted-care-dashboard .bed-stat-box small {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+/* Quick Actions List */
+.admitted-care-dashboard .quick-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admitted-care-dashboard .btn-quick-action {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.admitted-care-dashboard .btn-quick-primary {
+  background: #0d6efd;
+  color: #ffffff;
+}
+
+.admitted-care-dashboard .btn-quick-primary:hover {
+  background: #0b5ed7;
+  color: #ffffff;
+}
+
+.admitted-care-dashboard .btn-quick-outline-info {
+  background: #ffffff;
+  border-color: #0dcaf0;
+  color: #0aa2c0;
+}
+
+.admitted-care-dashboard .btn-quick-outline-info:hover {
+  background: #e7f9fd;
+}
+
+.admitted-care-dashboard .btn-quick-outline-warning {
+  background: #ffffff;
+  border-color: #ffc107;
+  color: #b08500;
+}
+
+.admitted-care-dashboard .btn-quick-outline-warning:hover {
+  background: #fffcf0;
+}
+
+/* Right Column: Search & Filters */
+.admitted-care-dashboard .pc-table-controls {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admitted-care-dashboard .pc-search-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 9px 14px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.admitted-care-dashboard .pc-search-input:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.admitted-care-dashboard .pc-filter-select {
+  padding: 9px 14px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  min-width: 170px;
+}
+
+/* Admitted Patients Table */
+.admitted-care-dashboard .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 6px;
+}
+
+.admitted-care-dashboard .pc-patients-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.admitted-care-dashboard .pc-patients-table thead {
+  background: #f8f9fa;
+}
+
+.admitted-care-dashboard .pc-patients-table th {
+  padding: 12px 14px;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.admitted-care-dashboard .pc-patients-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.admitted-care-dashboard .pc-patients-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.admitted-care-dashboard .pc-patients-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Row Status Highlights matching reference */
+.admitted-care-dashboard .table-row-danger {
+  background-color: #f8d7da !important;
+}
+
+.admitted-care-dashboard .table-row-warning {
+  background-color: #fff3cd !important;
+}
+
+.admitted-care-dashboard .table-row-info {
+  background-color: #cff4fc !important;
+}
+
+/* Badges */
+.admitted-care-dashboard .badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 4px;
+}
+
+.admitted-care-dashboard .badge-primary {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.admitted-care-dashboard .badge-success {
+  background: #198754;
+  color: #fff;
+}
+
+.admitted-care-dashboard .badge-danger {
+  background: #dc3545;
+  color: #fff;
+}
+
+.admitted-care-dashboard .badge-warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.admitted-care-dashboard .badge-info {
+  background: #0dcaf0;
+  color: #212529;
+}
+
+.admitted-care-dashboard .badge-secondary {
+  background: #6c757d;
+  color: #fff;
+}
+
+.admitted-care-dashboard .badge-dark {
+  background: #212529;
+  color: #fff;
+}
+
+/* Priority Progress Bar */
+.admitted-care-dashboard .priority-progress {
+  height: 20px;
+  width: 80px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.admitted-care-dashboard .priority-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  transition: width 0.6s ease;
+}
+
+/* Table Button Group */
+.admitted-care-dashboard .btn-group-actions {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.admitted-care-dashboard .btn-action-sm {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid #ced4da;
+  background: #ffffff;
+  color: #495057;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.admitted-care-dashboard .btn-action-sm:hover {
+  background: #e9ecef;
+}
+
+.admitted-care-dashboard .btn-action-primary {
+  color: #0d6efd;
+  border-color: #86b7fe;
+}
+
+.admitted-care-dashboard .btn-action-primary:hover {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.admitted-care-dashboard .btn-action-warning {
+  color: #b08500;
+  border-color: #ffe69c;
+}
+
+.admitted-care-dashboard .btn-action-warning:hover {
+  background: #ffc107;
+  color: #212529;
+}
+
+.admitted-care-dashboard .btn-action-danger {
+  color: #dc3545;
+  border-color: #f5c2c7;
+}
+
+.admitted-care-dashboard .btn-action-danger:hover {
+  background: #dc3545;
+  color: #fff;
+}
+
+/* 4. BED MANAGEMENT DEDICATED VIEW */
+.admitted-care-dashboard .ward-pills-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.admitted-care-dashboard .ward-pill-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid #ced4da;
+  background: #ffffff;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admitted-care-dashboard .ward-pill-btn:hover {
+  background: #e9ecef;
+}
+
+.admitted-care-dashboard .ward-pill-btn.active {
+  background: #0d6efd;
+  color: #ffffff;
+  border-color: #0d6efd;
+}
+
+.admitted-care-dashboard .bed-management-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admitted-care-dashboard .bed-card-recreated {
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 2px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
+}
+
+.admitted-care-dashboard .bed-card-recreated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.admitted-care-dashboard .bed-card-recreated.border-vacant {
+  border-color: #198754;
+}
+
+.admitted-care-dashboard .bed-card-recreated.border-occupied {
+  border-color: #ffc107;
+}
+
+.admitted-care-dashboard .bed-card-recreated.border-critical {
+  border-color: #dc3545;
+}
+
+.admitted-care-dashboard .bed-card-header {
+  padding: 10px 14px;
+  text-align: center;
+}
+
+.admitted-care-dashboard .bed-card-header.bg-vacant {
+  background: #198754;
+  color: #fff;
+}
+
+.admitted-care-dashboard .bed-card-header.bg-occupied {
+  background: #ffc107;
+  color: #212529;
+}
+
+.admitted-care-dashboard .bed-card-header.bg-critical {
+  background: #dc3545;
+  color: #fff;
+}
+
+.admitted-care-dashboard .bed-card-body {
+  padding: 16px 14px;
+  text-align: center;
+  flex: 1;
+}
+
+.admitted-care-dashboard .bed-card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.admitted-care-dashboard .bed-card-footer {
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* 5. ADD PATIENT DEDICATED VIEW */
+.admitted-care-dashboard .add-patient-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.admitted-care-dashboard .form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .admitted-care-dashboard .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admitted-care-dashboard .form-field-group {
+  margin-bottom: 16px;
+}
+
+.admitted-care-dashboard .form-field-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #212529;
+}
+
+.admitted-care-dashboard .form-field-group input,
+.admitted-care-dashboard .form-field-group select,
+.admitted-care-dashboard .form-field-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.admitted-care-dashboard .form-field-group input:focus,
+.admitted-care-dashboard .form-field-group select:focus,
+.admitted-care-dashboard .form-field-group textarea:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.admitted-care-dashboard .form-field-group small {
+  color: #6c757d;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* 6. AI INSIGHTS DEDICATED VIEW */
+.admitted-care-dashboard .insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .admitted-care-dashboard .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admitted-care-dashboard .capacity-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 14px;
+}
+
+.admitted-care-dashboard .peak-hours-alert {
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  color: #664d03;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+
+/* 7. XAI & ML DEDICATED VIEW */
+.admitted-care-dashboard .ecg-status-banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admitted-care-dashboard .ecg-status-connected {
+  background: #d1e7dd;
+  border: 1px solid #badbcc;
+  color: #0f5132;
+}
+
+.admitted-care-dashboard .ecg-status-disconnected {
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  color: #664d03;
+}
+
+.admitted-care-dashboard .ecg-oscilloscope-container {
+  background: #111827;
+  border-radius: 10px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+  margin-top: 16px;
+}
+
+.admitted-care-dashboard .ecg-oscilloscope-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: 20px 20px;
+  background-image:
+    linear-gradient(to right, rgba(0, 255, 128, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 255, 128, 0.07) 1px, transparent 1px);
+  pointer-events: none;
+}
+
+.admitted-care-dashboard .ecg-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.admitted-care-dashboard .ecg-stat-tile {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.admitted-care-dashboard .ecg-stat-tile h5 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.admitted-care-dashboard .ecg-stat-tile small {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+/* SHAP Feature attribution bars */
+.admitted-care-dashboard .shap-bar-container {
+  margin-bottom: 12px;
+}
+
+.admitted-care-dashboard .shap-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.admitted-care-dashboard .shap-bar-track {
+  height: 12px;
+  background: #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.admitted-care-dashboard .shap-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
 }

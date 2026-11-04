@@ -208,8 +208,8 @@ export default function VitalRecorderModal({
 
   return (
     <div className="pc-modal-backdrop" onClick={onClose}>
-      <div className="pc-modal-window" style={{ maxWidth: "880px" }} onClick={(e) => e.stopPropagation()}>
-        <div className="pc-modal-header">
+      <div className="pc-modal-window" style={{ maxWidth: "880px", maxHeight: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={(e) => e.stopPropagation()}>
+        <div className="pc-modal-header" style={{ flexShrink: 0 }}>
           <h3>
             <span>🩺</span> Bedside Vital Signs & MEWS — {patient.full_name || patient.patient_name}
           </h3>
@@ -219,7 +219,7 @@ export default function VitalRecorderModal({
         </div>
 
         {/* SUB-MODAL TABS (RECORD VS HISTORY) */}
-        <div style={{ display: "flex", gap: "8px", padding: "12px 24px", borderBottom: "1px solid var(--line)", background: "var(--paper)" }}>
+        <div style={{ display: "flex", gap: "8px", padding: "12px 24px", borderBottom: "1px solid var(--line)", background: "var(--paper)", flexShrink: 0 }}>
           <button
             type="button"
             className={`filter-tab ${activeTab === "record" ? "active" : ""}`}
@@ -237,8 +237,8 @@ export default function VitalRecorderModal({
         </div>
 
         {activeTab === "record" ? (
-          <form onSubmit={handleSubmit}>
-            <div className="pc-modal-body">
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
+            <div className="pc-modal-body" style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
               {error && (
                 <div className="doc-auth-alert doc-alert-danger">
                   <span>⚠️</span> <span>{error}</span>
@@ -401,108 +401,111 @@ export default function VitalRecorderModal({
               </div>
             </div>
 
-            <div className="pc-modal-footer">
-              <button type="button" className="btn-pc-secondary" onClick={onClose}>
+            <div className="pc-modal-footer" style={{ flexShrink: 0, padding: "14px 24px", borderTop: "1px solid var(--border)", background: "#f8f9fa", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn-pc-secondary" onClick={onClose} style={{ padding: "8px 16px", borderRadius: "6px" }}>
                 Close
               </button>
-              <button type="submit" className="btn-pc-primary" disabled={submitting}>
+              <button type="submit" className="btn-pc-primary" disabled={submitting} style={{ background: "var(--teal)", color: "#fff", padding: "10px 20px", fontWeight: 600, borderRadius: "6px", border: "none", cursor: "pointer" }}>
                 {submitting ? "Saving Vitals..." : "Commit Vitals & Calculate MEWS →"}
               </button>
             </div>
           </form>
         ) : (
-          <div className="pc-modal-body">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <h4 style={{ margin: 0, color: "var(--teal-deep)" }}>
-                Patient Historical Physiological Observations ({history.length})
-              </h4>
-              <button type="button" className="btn-pc-secondary" onClick={fetchHistory} disabled={historyLoading}>
-                {historyLoading ? "Refreshing..." : "🔄 Refresh History"}
-              </button>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
+            <div className="pc-modal-body" style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h4 style={{ margin: 0, color: "var(--teal-deep)" }}>
+                  Patient Historical Physiological Observations ({history.length})
+                </h4>
+                <button type="button" className="btn-pc-secondary" onClick={fetchHistory} disabled={historyLoading}>
+                  {historyLoading ? "Refreshing..." : "🔄 Refresh History"}
+                </button>
+              </div>
+
+              {historyLoading && history.length === 0 ? (
+                <div className="staff-loading" style={{ padding: "30px" }}>
+                  <div className="loading-spinner"></div>
+                  <p>Loading observation history...</p>
+                </div>
+              ) : history.length === 0 ? (
+                <div className="staff-empty-state" style={{ padding: "30px", border: "1px dashed var(--line)" }}>
+                  <span className="empty-icon">🩺</span>
+                  <h4>No Historical Vital Observations</h4>
+                  <p>No bedside vital observations have been recorded for this patient yet. Use the "Record Bedside Vitals" tab to submit the first reading.</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="pc-patients-table" style={{ fontSize: "12px" }}>
+                    <thead>
+                      <tr>
+                        <th>Timestamp (UTC)</th>
+                        <th>Source (Rule 10)</th>
+                        <th>HR (bpm)</th>
+                        <th>BP (mmHg)</th>
+                        <th>RR (/min)</th>
+                        <th>Temp (°C)</th>
+                        <th>SpO2 (%)</th>
+                        <th>MEWS Score</th>
+                        <th>Staff Author</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((rec) => {
+                        const mews = rec.mews_score || 0;
+                        let mewsClass = "mews-stable";
+                        if (mews >= 6) mewsClass = "mews-critical";
+                        else if (mews >= 4) mewsClass = "mews-elevated";
+                        else if (mews >= 2) mewsClass = "mews-monitoring";
+
+                        return (
+                          <tr key={rec.vital_id || rec.recorded_at}>
+                            <td>
+                              <strong>{formatTimestamp(rec.recorded_at)}</strong>
+                            </td>
+                            <td>
+                              <span className="pc-bed-type-pill pill-general" style={{ fontSize: "11px" }}>
+                                {formatSourceLabel(rec.observation_source)}
+                              </span>
+                            </td>
+                            <td><strong>{rec.heart_rate}</strong></td>
+                            <td><strong>{rec.blood_pressure_sys}/{rec.blood_pressure_dia || 80}</strong></td>
+                            <td><strong>{rec.respiratory_rate}</strong></td>
+                            <td><strong>{rec.temperature}</strong></td>
+                            <td><strong>{rec.oxygen_saturation}%</strong></td>
+                            <td>
+                              <span className={`mews-score-pill ${mewsClass}`} style={{ fontSize: "11px" }}>
+                                {mews} pts
+                              </span>
+                            </td>
+                            <td>
+                              <span style={{ color: "var(--ink-soft)" }}>{rec.recorded_by_staff_id || "Staff"}</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="disclaimer-banner" style={{ marginTop: "16px" }}>
+                <span className="disclaimer-icon">ℹ️</span>
+                <div>
+                  <strong>Audit & Provenance Logging (Rule 10):</strong> All observations record the recording source,
+                  calibrated physiological units, authenticated staff identity, and UTC timestamp to guarantee clinical data integrity.
+                </div>
+              </div>
             </div>
 
-            {historyLoading && history.length === 0 ? (
-              <div className="staff-loading" style={{ padding: "30px" }}>
-                <div className="loading-spinner"></div>
-                <p>Loading observation history...</p>
-              </div>
-            ) : history.length === 0 ? (
-              <div className="staff-empty-state" style={{ padding: "30px", border: "1px dashed var(--line)" }}>
-                <span className="empty-icon">🩺</span>
-                <h4>No Historical Vital Observations</h4>
-                <p>No bedside vital observations have been recorded for this patient yet. Use the "Record Bedside Vitals" tab to submit the first reading.</p>
-              </div>
-            ) : (
-              <div className="table-responsive">
-                <table className="pc-patients-table" style={{ fontSize: "12px" }}>
-                  <thead>
-                    <tr>
-                      <th>Timestamp (UTC)</th>
-                      <th>Source (Rule 10)</th>
-                      <th>HR (bpm)</th>
-                      <th>BP (mmHg)</th>
-                      <th>RR (/min)</th>
-                      <th>Temp (°C)</th>
-                      <th>SpO2 (%)</th>
-                      <th>MEWS Score</th>
-                      <th>Staff Author</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((rec) => {
-                      const mews = rec.mews_score || 0;
-                      let mewsClass = "mews-stable";
-                      if (mews >= 6) mewsClass = "mews-critical";
-                      else if (mews >= 4) mewsClass = "mews-elevated";
-                      else if (mews >= 2) mewsClass = "mews-monitoring";
-
-                      return (
-                        <tr key={rec.vital_id || rec.recorded_at}>
-                          <td>
-                            <strong>{formatTimestamp(rec.recorded_at)}</strong>
-                          </td>
-                          <td>
-                            <span className="pc-bed-type-pill pill-general" style={{ fontSize: "11px" }}>
-                              {formatSourceLabel(rec.observation_source)}
-                            </span>
-                          </td>
-                          <td><strong>{rec.heart_rate}</strong></td>
-                          <td><strong>{rec.blood_pressure_sys}/{rec.blood_pressure_dia || 80}</strong></td>
-                          <td><strong>{rec.respiratory_rate}</strong></td>
-                          <td><strong>{rec.temperature}</strong></td>
-                          <td><strong>{rec.oxygen_saturation}%</strong></td>
-                          <td>
-                            <span className={`mews-score-pill ${mewsClass}`} style={{ fontSize: "11px" }}>
-                              {mews} pts
-                            </span>
-                          </td>
-                          <td>
-                            <span style={{ color: "var(--ink-soft)" }}>{rec.recorded_by_staff_id || "Staff"}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <div className="disclaimer-banner" style={{ marginTop: "16px" }}>
-              <span className="disclaimer-icon">ℹ️</span>
-              <div>
-                <strong>Audit & Provenance Logging (Rule 10):</strong> All observations record the recording source,
-                calibrated physiological units, authenticated staff identity, and UTC timestamp to guarantee clinical data integrity.
-              </div>
-            </div>
-
-            <div className="pc-modal-footer" style={{ marginTop: "16px", padding: 0, border: "none" }}>
-              <button type="button" className="btn-pc-secondary" onClick={onClose}>
+            <div className="pc-modal-footer" style={{ flexShrink: 0, padding: "14px 24px", borderTop: "1px solid var(--border)", background: "#f8f9fa", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn-pc-secondary" onClick={onClose} style={{ padding: "8px 16px", borderRadius: "6px" }}>
                 Close
               </button>
               <button
                 type="button"
                 className="btn-pc-primary"
                 onClick={() => setActiveTab("record")}
+                style={{ background: "var(--teal)", color: "#fff", padding: "10px 20px", fontWeight: 600, borderRadius: "6px", border: "none", cursor: "pointer" }}
               >
                 + Record New Observation
               </button>

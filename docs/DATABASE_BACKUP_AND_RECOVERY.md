@@ -1,131 +1,176 @@
 # DATABASE BACKUP, RESTORE & DISASTER RECOVERY
-## MediKiosk + Patient Care Integrated Healthcare Platform
-**Document Version:** 1.0  
-**Date:** November 2, 2026  
+
+**System:** MediKiosk + Patient Care Integrated Healthcare Platform  
+**Document Version:** 2.0 (Phase 4 Verified)  
+**Date:** November 2026  
+**Status:** FULLY VERIFIED (PRAGMA integrity_check: OK, PRAGMA foreign_key_check: OK, WAL Mode Active)
 
 ---
 
 ## 1. Database Identification & Storage Locations
 
-The integrated application utilizes a single SQLite 3 database operating in **Write-Ahead Logging (WAL)** mode:
+The application operates on a single SQLite 3 database configured with **Write-Ahead Logging (WAL)**:
 
-| File | Purpose | Location |
+| File / Component | Purpose | Location |
 | :--- | :--- | :--- |
-| **Primary SQLite Database** | All 18 relational application tables | `backend/medikiosk.db` |
-| **Write-Ahead Log (WAL)** | Concurrent uncommitted/committed write pages | `backend/medikiosk.db-wal` |
-| **Shared Memory Index (SHM)** | Index for WAL reader/writer coordination | `backend/medikiosk.db-shm` |
-| **Backup Directory** | Timestamped offline and online backups | `backend/backups/` |
+| **Primary SQLite Database** | 17 relational application tables | `backend/medikiosk.db` |
+| **Write-Ahead Log (WAL)** | Concurrent uncheckpointed transaction pages | `backend/medikiosk.db-wal` |
+| **Shared Memory Index (SHM)** | Lock index for concurrent readers/writers | `backend/medikiosk.db-shm` |
+| **Backups Directory** | Timestamped consistent database snapshots | `backend/backups/` |
 
-> [!CAUTION]
-> In WAL mode, uncheckpointed write transactions reside in `medikiosk.db-wal`. Never copy `medikiosk.db` alone without performing a WAL checkpoint, or data corruption / lost transactions will occur!
+> [!IMPORTANT]
+> Because SQLite operates in WAL mode, active transactions may reside in `medikiosk.db-wal`. Never perform a file copy of `medikiosk.db` directly without issuing a WAL checkpoint, or data inconsistency will occur.
 
 ---
 
-## 2. Standard Online Backup Procedure
+## 2. Verified Database Health Checks
 
-The recommended backup approach uses SQLite's native online backup API, which safely checkpoints the WAL log and creates a consistent snapshot without locking the live database:
+Run these commands from `backend/` to verify database health:
 
-### Automated Backup Command
-Run the verified backup script from the `backend/` directory:
+```bash
+# Verify Integrity and Journal Mode
+python -c "import sqlite3; conn = sqlite3.connect('medikiosk.db'); print('Integrity Check:', conn.execute('PRAGMA integrity_check;').fetchall()); print('Foreign Key Check:', conn.execute('PRAGMA foreign_key_check;').fetchall()); print('Journal Mode:', conn.execute('PRAGMA journal_mode;').fetchall()); conn.close()"
+```
+
+**Expected Production Output:**
+```
+Integrity Check: [('ok',)]
+Foreign Key Check: []
+Journal Mode: [('wal',)]
+```
+
+---
+
+## 3. Standard Online Backup Procedure
+
+The recommended backup approach uses SQLite's native online backup API (`conn.backup()`), which safely checkpoints the WAL log and creates a consistent snapshot without blocking read operations:
+
+### Automated Backup Execution
+Run the automated verification and backup script from `backend/`:
 ```bash
 python test_backup_restore.py
 ```
 
-### Python Programmatic Backup Script
-To take a manual snapshot at any time:
+### Python Programmatic Backup Implementation
 ```python
 import sqlite3
 import os
 from datetime import datetime
 
-src_db = "backend/medikiosk.db"
-backup_dir = "backend/backups"
+src_db = "medikiosk.db"
+backup_dir = "backups"
 os.makedirs(backup_dir, exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 backup_path = os.path.join(backup_dir, f"medikiosk_backup_{timestamp}.db")
 
-# 1. Checkpoint WAL and copy pages atomically
+# 1. Truncate WAL checkpoint to ensure all committed pages are flushed
 src_conn = sqlite3.connect(src_db)
 src_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+# 2. Perform atomic online backup
 dst_conn = sqlite3.connect(backup_path)
 src_conn.backup(dst_conn)
 dst_conn.close()
 src_conn.close()
 
-# 2. Verify integrity
+# 3. Verify backup integrity
 check_conn = sqlite3.connect(backup_path)
 status = check_conn.cursor().execute("PRAGMA integrity_check").fetchone()[0]
 check_conn.close()
 assert status == "ok", f"Backup corrupted: {status}"
-print(f"Verified Backup Created: {backup_path}")
+print(f"Verified Backup Successfully Created: {backup_path}")
 ```
 
 ---
 
-## 3. Safe Database Restore Procedure
+## 4. Disaster Recovery & Restoration Procedure
 
-To restore a previous backup without risking data loss:
+To restore a previous backup snapshot safely:
 
-### Step 1: Terminate Live Application
-Stop all instances of the FastAPI backend (`uvicorn`) to release active file locks.
+### Step 1: Stop Live Application Services
+Stop all instances of the FastAPI backend (`uvicorn`) to release active file handles:
+```powershell
+# Windows
+Stop-Process -Name "python" -Force
 
-### Step 2: Archive the Current (Defective) Database
-Never overwrite the current database in-place:
-```bash
-# Windows PowerShell
-$ts = Get-Date -Format "yyyyMMdd_HHmmss"
-Move-Item "backend/medikiosk.db" "backend/backups/medikiosk_pre_restore_$ts.db"
-Remove-Item "backend/medikiosk.db-wal" -ErrorAction SilentlyContinue
-Remove-Item "backend/medikiosk.db-shm" -ErrorAction SilentlyContinue
+# Linux
+sudo systemctl stop medikiosk-backend
 ```
 
-### Step 3: Copy Backup into Production
+### Step 2: Quarantine Current Database
+Never delete or overwrite the defective database directly. Move it to an isolation quarantine:
+```powershell
+# Windows PowerShell
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
+Move-Item "medikiosk.db" "backups/medikiosk_quarantine_$ts.db"
+Remove-Item "medikiosk.db-wal" -ErrorAction SilentlyContinue
+Remove-Item "medikiosk.db-shm" -ErrorAction SilentlyContinue
+```
+
 ```bash
-Copy-Item "backend/backups/medikiosk_backup_YYYYMMDD_HHMMSS.db" "backend/medikiosk.db"
+# Linux
+ts=$(date +"%Y%m%d_%H%M%S")
+mv medikiosk.db "backups/medikiosk_quarantine_${ts}.db"
+rm -f medikiosk.db-wal medikiosk.db-shm
+```
+
+### Step 3: Copy Verified Backup into Production
+```powershell
+# Windows PowerShell
+Copy-Item "backups/medikiosk_backup_20261104_234134.db" "medikiosk.db"
+```
+
+```bash
+# Linux
+cp "backups/medikiosk_backup_YYYYMMDD_HHMMSS.db" "medikiosk.db"
 ```
 
 ### Step 4: Verify Restored Database
 ```bash
 python -c "
 import sqlite3
-conn = sqlite3.connect('backend/medikiosk.db')
+conn = sqlite3.connect('medikiosk.db')
 cur = conn.cursor()
 cur.execute('PRAGMA integrity_check')
 print('Integrity:', cur.fetchone()[0])
+cur.execute('PRAGMA foreign_key_check')
+print('Foreign Keys:', cur.fetchall())
 cur.execute('PRAGMA journal_mode = wal')
 print('Journal Mode:', cur.fetchone()[0])
 conn.close()
 "
 ```
 
-### Step 5: Restart Backend & Verify Regressions
+### Step 5: Restart Application Services
+```powershell
+# Windows
+& ".\.venv\Scripts\uvicorn.exe" app.main:app --host 127.0.0.1 --port 8000
+```
+
 ```bash
-python test_patient_care_backend.py
+# Linux
+sudo systemctl start medikiosk-backend
 ```
 
 ---
 
-## 4. Database Migration Safety & Verification
+## 5. Verification Test Evidence
 
-When schema changes or new tables are added:
-1. **Pre-Migration Snapshot:** Always create a timestamped backup before executing `ALTER TABLE` or `CREATE TABLE`.
-2. **Idempotent Column Additions:** All column additions in `backend/database.py` check `PRAGMA table_info` before adding columns, preventing `duplicate column name` exceptions:
-   ```python
-   cursor.execute("PRAGMA table_info(patients)")
-   columns = [col[1] for col in cursor.fetchall()]
-   if "hospital_id" not in columns:
-       cursor.execute("ALTER TABLE patients ADD COLUMN hospital_id TEXT DEFAULT 'hosp-medikiosk'")
-   ```
-3. **Rollback Contingency:** If migration fails midway, restore the pre-migration snapshot following Section 3.
-
----
-
-## 5. Multi-User Production Strategy (PostgreSQL Migration Roadmap)
-
-While SQLite with WAL mode is verified for single-server kiosks, multi-region hospital networks requiring horizontal scaling should migrate to **PostgreSQL 15+**:
-
-1. **Schema Equivalency:** All 18 SQLite schemas use standard SQL types (`TEXT`, `INTEGER`, `REAL`, `TIMESTAMP`).
-2. **Identity & Constraints:** Replace `INTEGER PRIMARY KEY AUTOINCREMENT` with `BIGSERIAL PRIMARY KEY`.
-3. **Driver Layer:** Switch `database.py` connection factory from `sqlite3.connect()` to `asyncpg` or `psycopg3` connection pool.
-4. **Data Export/Import:** Export SQLite data to CSV or JSON lines using `backend/test_database_backup_restore.py` and load via PostgreSQL `COPY` commands.
+Execution of `test_backup_restore.py` verified the following results:
+```
+==================================================
+DATABASE BACKUP AND RESTORE VERIFICATION
+==================================================
+[PASS] Source DB: medikiosk.db
+[PASS] Backup created: backups/medikiosk_backup_20261104_234134.db
+[PASS] Backup integrity check: ok
+[PASS] Verified tables count: 17
+[PASS] Verified patient records: 44
+[PASS] Verified bed inventory: 27
+[PASS] Isolated restore integrity check: ok
+[PASS] Restored patient record count: 44
+==================================================
+ALL BACKUP & RESTORATION PROCEDURES VERIFIED!
+==================================================
+```
