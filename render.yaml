@@ -34,7 +34,7 @@ services:
   - type: static
     name: medikiosk-frontend
     rootDir: Frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=optional && npm run build
     staticPublishPath: dist
     routes:
       - type: rewrite
