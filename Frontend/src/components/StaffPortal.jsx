@@ -4,6 +4,8 @@ import "./patient_care/patient_care.css";
 
 // Reusable VitalTrack UI
 import SidebarNav from "./ui/SidebarNav";
+import StaffSidebar from "./vital_track/StaffSidebar";
+import StaffTopbar from "./vital_track/StaffTopbar";
 import Drawer from "./ui/Drawer";
 import EmptyState from "./ui/EmptyState";
 import MewsChip from "./ui/MewsChip";
@@ -42,7 +44,7 @@ export default function StaffPortal({
   // =========================
   // WORKSTATION NAVIGATION & LAYOUT
   // =========================
-  const [activeView, setActiveView] = useState("dashboard"); // 'dashboard' | 'opd' | 'admitted' | 'beds' | 'vitals' | 'xai' | 'transfers' | 'care_plans' | 'reports' | 'settings'
+  const [activeView, setActiveView] = useState("opd"); // default to 'opd' queue dashboard
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -441,8 +443,8 @@ export default function StaffPortal({
   // =========================
   return (
     <div className="vt-app-container">
-      {/* 1. COLLAPSIBLE SIDEBAR */}
-      <SidebarNav
+      {/* 1. COLLAPSIBLE DARK SIDEBAR */}
+      <StaffSidebar
         activeView={activeView}
         onSelectView={(view) => setActiveView(view)}
         isCollapsed={sidebarCollapsed}
@@ -456,99 +458,32 @@ export default function StaffPortal({
 
       {/* 2. MAIN CONTENT AREA */}
       <main className="vt-main-content">
-        {/* SLIM TOPBAR */}
-        <header className="vt-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
-            <button
-              type="button"
-              className="vt-collapse-btn"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              title="Toggle sidebar"
-              style={{ display: "flex" }}
-            >
-              ☰
-            </button>
-
-            {/* SEARCH */}
-            <div className="vt-search-box">
-              <span style={{ fontSize: "14px", opacity: 0.6 }}>🔍</span>
-              <input
-                type="text"
-                className="vt-search-input"
-                placeholder="Search patients, PAT-IDs, beds, or alerts..."
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
-              />
-            </div>
-
-            {/* HOSPITAL CHIP */}
-            <div className="vt-hosp-chip" style={{ display: "none", alignItems: "center" }}>
-              <span>🏥</span>
-              <span>{currentStaff.hospital_name || "Hospital Station"}</span>
-            </div>
-          </div>
-
-          <div className="vt-topbar-actions">
-            {/* LIVE SYNC STATUS */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "7px",
-                background: "#ffffff",
-                border: "1px solid var(--vt-card-border)",
-                borderRadius: "var(--vt-radius-pill)",
-                padding: "6px 14px",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "var(--vt-dark-green)",
-                boxShadow: "var(--vt-shadow-sm)",
-              }}
-            >
-              <span className="live-dot pulse" style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--vt-mid-green)" }}></span>
-              <span>Live Sync (10s)</span>
-              {lastRefreshed && (
-                <span style={{ fontSize: "11px", color: "var(--vt-text-muted)" }}>
-                  • {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                </span>
-              )}
-            </div>
-
-            {/* MANUAL REFRESH */}
-            <button
-              type="button"
-              className="vt-icon-btn"
-              onClick={fetchDashboardData}
-              title="Refresh all metrics and queues"
-            >
-              🔄
-            </button>
-
-            {/* SWITCH TO PATIENT KIOSK */}
-            <button
-              type="button"
-              className="vt-btn-secondary"
-              onClick={onSwitchToPatient}
-              title="Switch to patient self-service kiosk"
-              style={{ padding: "8px 14px", fontSize: "12.5px" }}
-            >
-              ← Patient Kiosk
-            </button>
-
-            {/* PRIMARY CTA: + ADMIT PATIENT */}
-            <button
-              type="button"
-              className="vt-btn-cta-admit"
-              onClick={() => {
-                setSelectedBedForAdmission("");
-                setActiveModal("admit");
-              }}
-            >
-              <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span>
-              <span>Admit Patient</span>
-            </button>
-          </div>
-        </header>
+        {/* PREMIUM TOPBAR */}
+        <StaffTopbar
+          currentStaff={currentStaff}
+          lastRefreshed={lastRefreshed}
+          onRefresh={fetchDashboardData}
+          onSwitchToPatient={onSwitchToPatient}
+          onAdmitClick={() => {
+            setSelectedBedForAdmission("");
+            setActiveModal("admit");
+          }}
+          globalSearch={globalSearch}
+          onSearchChange={setGlobalSearch}
+          unreadAlertCount={unacknowledgedCount}
+          pageTitle={
+            activeView === "opd"
+              ? "OPD Dashboard"
+              : activeView === "admitted" || activeView === "beds"
+              ? "Inpatient Care & Bed Management"
+              : "Staff Workstation"
+          }
+          breadcrumb={
+            activeView === "opd"
+              ? "Staff Portal / OPD Dashboard"
+              : "Staff Portal / Inpatient Care"
+          }
+        />
 
         {/* PAGE CONTENT CONTAINER */}
         <div style={{ padding: "0 28px 40px", flex: 1 }}>
@@ -599,10 +534,12 @@ export default function StaffPortal({
               }}
               onRecordVitals={(pat) => openModal("vitals", pat)}
               onOpenProfile={(id) => setSelectedProfilePatientId(id)}
+              onOpenCaseDetails={handleOpenCaseDetails}
               onOpenECG={(pat) => openModal("ecg", pat)}
               onOptimizeBeds={handleOptimizeBeds}
               optimizing={optimizing}
               optimizeMessage={optimizeMessage}
+              showBedManagementOnly={activeView === "beds"}
             />
           )}
 

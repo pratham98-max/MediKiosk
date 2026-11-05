@@ -7,6 +7,7 @@ import XAIRiskModal from "./XAIRiskModal";
 import ECGTelemetryModal from "./ECGTelemetryModal";
 import CarePlansModal from "./CarePlansModal";
 import BedManagementModal from "./BedManagementModal";
+import VitalsOverviewSection from "../vital_track/VitalsOverviewSection";
 
 export default function UnifiedPatientProfileModal({
   apiBase,
@@ -751,7 +752,15 @@ export default function UnifiedPatientProfileModal({
               {/* TAB 1: OVERVIEW & SUMMARY (EDUVERSE+ ANATOMY LAYOUT)          */}
               {/* ============================================================= */}
               {activeTab === "overview" && (
-                <div className="upm-overview-grid">
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  {/* ENHANCED LIVE VITALS OVERVIEW SECTION (VITALTRACK INSPIRED) */}
+                  <VitalsOverviewSection
+                    vitals={vitals}
+                    patient={patient}
+                    mews={currentMews}
+                  />
+
+                  <div className="upm-overview-grid">
                   {/* --------------------------------------------------------- */}
                   {/* LEFT COLUMN: TOP VITAL CARDS + PATIENT IDENTITY           */}
                   {/* --------------------------------------------------------- */}
@@ -1514,6 +1523,7 @@ export default function UnifiedPatientProfileModal({
                     </section>
                   </div>
                 </div>
+              </div>
               )}
 
               {/* ============================================================= */}
