@@ -37,10 +37,14 @@
 .vt-app-container {
   display: flex;
   min-height: 100vh;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
   background-color: var(--vt-bg);
   color: var(--vt-text-main);
   font-family: inherit;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .vt-app-container *,
@@ -1405,7 +1409,8 @@
 
 .vt-topbar-center {
   flex: 1;
-  max-width: 420px;
+  min-width: 0;
+  max-width: 340px;
 }
 
 .vt-topbar-search-box {
@@ -1441,7 +1446,10 @@
 .vt-topbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .vt-live-sync-pill {

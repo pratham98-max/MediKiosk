@@ -1247,7 +1247,7 @@ function App() {
           onNewConsultation={startNewPatient}
           hasActiveSession={Boolean(sessionId)}
         />
-        <main className="portal-main-content">
+        <main className="portal-main-content staff-full-width">
           <StaffPortal
             apiBase={API_BASE}
             currentStaff={currentStaff}

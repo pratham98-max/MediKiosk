@@ -729,6 +729,19 @@ body {
   padding: 24px 16px;
 }
 
+/* Staff Portal full-width override — no centering, no padding, stretch to fill */
+.portal-main-content.staff-full-width {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  overflow: hidden;
+}
+.portal-main-content.staff-full-width > * {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
 /* --- Portal Header --- */
 .portal-header {
   position: sticky;
