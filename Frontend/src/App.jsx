@@ -45,6 +45,13 @@ function App() {
     }
   });
 
+  const handleSwitchPortal = (target) => {
+    if (currentPatient && target !== "patient") {
+      return;
+    }
+    setActivePortal(target);
+  };
+
   // Selected Hospital for consultation session
   const [selectedHospital, setSelectedHospital] = useState({
     hospital_id: "hosp-medikiosk",
@@ -1239,7 +1246,7 @@ function App() {
         <div className="portal-page-container">
           <PortalHeader
             activePortal={activePortal}
-            setActivePortal={setActivePortal}
+            setActivePortal={handleSwitchPortal}
             currentPatient={currentPatient}
             currentDoctor={currentDoctor}
             currentStaff={currentStaff}
@@ -1268,7 +1275,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           currentStaff={currentStaff}
@@ -1301,7 +1308,7 @@ function App() {
         <div className="portal-page-container">
           <PortalHeader
             activePortal={activePortal}
-            setActivePortal={setActivePortal}
+            setActivePortal={handleSwitchPortal}
             currentPatient={currentPatient}
             currentDoctor={currentDoctor}
             currentStaff={currentStaff}
@@ -1330,7 +1337,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           currentStaff={currentStaff}
@@ -1363,7 +1370,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={null}
           currentDoctor={currentDoctor}
           currentStaff={currentStaff}
@@ -1455,7 +1462,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           onLogout={handleLogout}
@@ -1561,7 +1568,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           onLogout={handleLogout}
@@ -1658,7 +1665,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           onLogout={handleLogout}
@@ -1887,7 +1894,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           onLogout={handleLogout}
@@ -2102,7 +2109,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           currentStaff={currentStaff}
@@ -2141,7 +2148,7 @@ function App() {
       <div className="portal-page-container">
         <PortalHeader
           activePortal={activePortal}
-          setActivePortal={setActivePortal}
+          setActivePortal={handleSwitchPortal}
           currentPatient={currentPatient}
           currentDoctor={currentDoctor}
           onLogout={handleLogout}
@@ -2457,7 +2464,7 @@ function App() {
     <div className="portal-page-container">
       <PortalHeader
         activePortal={activePortal}
-        setActivePortal={setActivePortal}
+        setActivePortal={handleSwitchPortal}
         currentPatient={currentPatient}
         currentDoctor={currentDoctor}
         onLogout={handleLogout}

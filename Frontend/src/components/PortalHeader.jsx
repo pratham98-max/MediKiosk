@@ -12,6 +12,8 @@ export default function PortalHeader({
   onNewConsultation,
   hasActiveSession,
 }) {
+  const isPatientActive = Boolean(currentPatient);
+
   return (
     <header className="portal-header">
       <div className="header-brand">
@@ -24,7 +26,7 @@ export default function PortalHeader({
         </div>
       </div>
 
-      {/* Role Switcher / Tabs – Always visible so user can freely switch between portals */}
+      {/* Role Switcher / Tabs – Clinician portals disabled during active patient session */}
       <div className="portal-switcher">
         <button
           type="button"
@@ -37,20 +39,44 @@ export default function PortalHeader({
 
         <button
           type="button"
-          className={`portal-tab ${activePortal === "doctor" ? "active" : ""}`}
-          onClick={() => setActivePortal && setActivePortal("doctor")}
+          className={`portal-tab ${activePortal === "doctor" ? "active" : ""} ${
+            isPatientActive ? "disabled-tab" : ""
+          }`}
+          disabled={isPatientActive}
+          onClick={() => {
+            if (isPatientActive) return;
+            setActivePortal && setActivePortal("doctor");
+          }}
+          title={
+            isPatientActive
+              ? "Clinician portals are locked during active patient intake. Please complete or log out of the patient session to switch."
+              : "Doctor Portal"
+          }
         >
           <span className="tab-icon">🩺</span>
           <span>Doctor Portal</span>
+          {isPatientActive && <span className="tab-lock-indicator">🔒</span>}
         </button>
 
         <button
           type="button"
-          className={`portal-tab ${activePortal === "staff" ? "active" : ""}`}
-          onClick={() => setActivePortal && setActivePortal("staff")}
+          className={`portal-tab ${activePortal === "staff" ? "active" : ""} ${
+            isPatientActive ? "disabled-tab" : ""
+          }`}
+          disabled={isPatientActive}
+          onClick={() => {
+            if (isPatientActive) return;
+            setActivePortal && setActivePortal("staff");
+          }}
+          title={
+            isPatientActive
+              ? "Staff portal is locked during active patient intake. Please complete or log out of the patient session to switch."
+              : "Healthcare Staff"
+          }
         >
           <span className="tab-icon">🏥</span>
           <span>Healthcare Staff</span>
+          {isPatientActive && <span className="tab-lock-indicator">🔒</span>}
         </button>
       </div>
 

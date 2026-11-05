@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Clock,
@@ -20,6 +20,8 @@ export default function PatientQueue({
   acknowledgingId,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   const filteredPatients = patients.filter((p) => {
     if (!searchTerm.trim()) return true;
@@ -35,6 +37,15 @@ export default function PatientQueue({
       doc.includes(term)
     );
   });
+
+  // Reset page whenever search or filter tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedPatients = filteredPatients.slice(startIndex, startIndex + pageSize);
 
   const filterTabs = [
     { id: "all", label: "All Patients", count: counts.total || patients.length },
@@ -153,7 +164,7 @@ export default function PatientQueue({
                 </tr>
               </thead>
               <tbody>
-                {filteredPatients.map((pat) => {
+                {pagedPatients.map((pat) => {
                   const isRedFlag = pat.red_flag === 1;
                   const isAck = pat.red_flag_acknowledged === 1;
                   const isAcknowledging = acknowledgingId === pat.session_id;
@@ -298,6 +309,49 @@ export default function PatientQueue({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* 4. PAGINATION FOOTER */}
+        {!loading && filteredPatients.length > 0 && (
+          <div className="opd-pagination-footer">
+            <div className="pagination-summary">
+              Showing <strong>{startIndex + 1}</strong> &ndash;{" "}
+              <strong>{Math.min(startIndex + pageSize, filteredPatients.length)}</strong> of{" "}
+              <strong>{filteredPatients.length}</strong> patients
+            </div>
+            <div className="pagination-nav-group">
+              <button
+                type="button"
+                className="btn-page-step"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                title="Previous page"
+              >
+                &larr; Previous
+              </button>
+              <div className="page-number-buttons">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    className={`btn-page-number ${currentPage === pg ? "active" : ""}`}
+                    onClick={() => setCurrentPage(pg)}
+                  >
+                    {pg}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn-page-step"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                title="Next page"
+              >
+                Next &rarr;
+              </button>
+            </div>
           </div>
         )}
       </div>

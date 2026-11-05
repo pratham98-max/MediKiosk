@@ -669,6 +669,8 @@ export default function DoctorPortal({
                   <div
                     key={idx}
                     className={`queue-card ${isSelected ? "selected" : ""} ${
+                      item.red_flag === 1 ? "queue-card-urgent" : ""
+                    } ${
                       isConsulting ? "status-consulting" : isDone ? "status-done" : ""
                     }`}
                     onClick={() => { setPendingPatient(item); setActiveSession(null); setOtpError(""); setConsultationSuccess(""); setEmrStoredSuccess(""); }}
@@ -676,19 +678,30 @@ export default function DoctorPortal({
                     <div className="queue-card-top">
                       <span
                         className={`queue-status-pill ${
-                          isDone
+                          item.red_flag === 1
+                            ? "pill-urgent"
+                            : isDone
                             ? "pill-done"
                             : isConsulting
                             ? "pill-consulting"
-                            : "pill-ready"
+                            : item.status === "ready_for_opd"
+                            ? "pill-ready"
+                            : "pill-pending"
                         }`}
                       >
-                        {isDone
+                        {item.red_flag === 1
+                          ? "🚨 URGENT: Red Flag"
+                          : isDone
                           ? "✓ Completed"
                           : isConsulting
                           ? "🩺 In Progress"
-                          : "🟢 Ready for OPD"}
+                          : item.status === "ready_for_opd"
+                          ? "🟢 Ready for OPD"
+                          : "⏳ Intake Active"}
                       </span>
+                      {item.red_flag === 1 && (
+                        <span className="queue-urgent-tag">Attention</span>
+                      )}
                     </div>
 
                     <div className="queue-patient-name">
@@ -744,13 +757,31 @@ export default function DoctorPortal({
               <p>Opening Patient Clinical Package...</p>
             </div>
           ) : !activeSession ? (
-            <div className="dossier-placeholder">
-              <span className="dossier-icon">📂</span>
-              <h3>No Patient File Selected</h3>
-              <p>
-                Select a patient from the OPD Queue on the left, or enter their 6-digit OTP code
-                above to open their AI pre-triage dossier.
+            <div className="dossier-placeholder clean-empty-state">
+              <div className="empty-state-badge">CLINICAL OPD WORKSPACE</div>
+              <div className="empty-state-icon-wrap">
+                <span className="empty-state-icon">📋</span>
+              </div>
+              <h3 className="empty-state-title">No Patient File Selected</h3>
+              <p className="empty-state-sub">
+                To begin a clinical consultation or review pre-triage records, choose an option below:
               </p>
+              <div className="empty-state-guidance-grid">
+                <div className="guidance-card">
+                  <div className="guidance-num">1</div>
+                  <div className="guidance-body">
+                    <strong>Select from Live OPD Queue</strong>
+                    <p>Click &ldquo;Examine File &rarr;&rdquo; on any waiting patient in the left queue to review their complete AI interview, triage assessment, and contradiction audit.</p>
+                  </div>
+                </div>
+                <div className="guidance-card">
+                  <div className="guidance-num">2</div>
+                  <div className="guidance-body">
+                    <strong>Verify Patient 6-Digit OTP</strong>
+                    <p>When the patient sits in your consultation room, ask for their 6-digit MediKiosk check-in code and enter it in the top bar to unlock their file.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="dossier-content">

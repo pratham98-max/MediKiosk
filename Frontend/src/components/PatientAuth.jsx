@@ -19,13 +19,55 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
 
-  // Demo account filler for rapid testing
-  const fillDemoAccount = () => {
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+
+  // 1-Click Demo account login
+  const handleDemoLogin = async () => {
     setMode("login");
     setLoginIdentifier("jane@example.com");
     setLoginPassword("password123");
     setError("");
-    setSuccessMsg("Filled with demo patient credentials. Click 'Sign In' below.");
+    setSuccessMsg("");
+    setLoading(true);
+
+    try {
+      let res;
+      try {
+        res = await fetch(`${apiBase}/patient/demo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch {
+        res = null;
+      }
+
+      if (!res || !res.ok) {
+        res = await fetch(`${apiBase}/patient/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identifier: "jane@example.com",
+            password: "password123",
+          }),
+        });
+      }
+
+      const data = await res.json();
+      if (!data.success || !data.patient) {
+        throw new Error(data.error || "Demo patient login failed.");
+      }
+
+      setSuccessMsg("Demo patient authenticated! Entering portal...");
+      setTimeout(() => {
+        onLoginSuccess(data.patient);
+      }, 350);
+    } catch (err) {
+      setError(err.message || "Failed to log in with demo patient.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle Login
@@ -142,9 +184,10 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
           <button
             type="button"
             className="btn-demo-fill"
-            onClick={fillDemoAccount}
+            onClick={handleDemoLogin}
+            disabled={loading}
           >
-            Use Demo Patient
+            {loading ? "Authenticating..." : "Use Demo Patient"}
           </button>
         </div>
 
@@ -183,14 +226,14 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
           <form onSubmit={handleLogin} className="auth-form">
             <div className="form-group">
               <label htmlFor="login-identifier">
-                Email Address or Phone Number
+                Email Address, Phone Number or Full Name
               </label>
               <div className="input-with-icon">
-                <span className="input-icon">📧</span>
+                <span className={`input-icon ${loginIdentifier ? "hidden-icon" : ""}`}>📧</span>
                 <input
                   id="login-identifier"
                   type="text"
-                  placeholder="e.g. jane@example.com or 9876543210"
+                  placeholder="e.g. jane@example.com, 9876543210, or Jane Doe"
                   value={loginIdentifier}
                   onChange={(e) => setLoginIdentifier(e.target.value)}
                   disabled={loading}
@@ -203,10 +246,10 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
             <div className="form-group">
               <label htmlFor="login-password">Password</label>
               <div className="input-with-icon">
-                <span className="input-icon">🔒</span>
+                <span className={`input-icon ${loginPassword ? "hidden-icon" : ""}`}>🔒</span>
                 <input
                   id="login-password"
-                  type="password"
+                  type={showLoginPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
@@ -214,6 +257,15 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
                   autoComplete="current-password"
                   required
                 />
+                <button
+                  type="button"
+                  className="btn-toggle-pwd"
+                  onClick={() => setShowLoginPassword((prev) => !prev)}
+                  title={showLoginPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                >
+                  {showLoginPassword ? "🙈" : "👁️"}
+                </button>
               </div>
             </div>
 
@@ -246,7 +298,7 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
             <div className="form-group">
               <label htmlFor="reg-name">Full Name *</label>
               <div className="input-with-icon">
-                <span className="input-icon">👤</span>
+                <span className={`input-icon ${regFullName ? "hidden-icon" : ""}`}>👤</span>
                 <input
                   id="reg-name"
                   type="text"
@@ -319,28 +371,41 @@ export default function PatientAuth({ onLoginSuccess, apiBase }) {
             <div className="form-row">
               <div className="form-group half">
                 <label htmlFor="reg-password">Password *</label>
-                <input
-                  id="reg-password"
-                  type="password"
-                  placeholder="Min 4 characters"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  disabled={loading}
-                  required
-                />
+                <div className="input-with-toggle">
+                  <input
+                    id="reg-password"
+                    type={showRegPassword ? "text" : "password"}
+                    placeholder="Min 4 characters"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn-toggle-pwd"
+                    onClick={() => setShowRegPassword((prev) => !prev)}
+                    title={showRegPassword ? "Hide password" : "Show password"}
+                    tabIndex={-1}
+                  >
+                    {showRegPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group half">
                 <label htmlFor="reg-confirm">Confirm Password *</label>
-                <input
-                  id="reg-confirm"
-                  type="password"
-                  placeholder="Repeat password"
-                  value={regConfirmPassword}
-                  onChange={(e) => setRegConfirmPassword(e.target.value)}
-                  disabled={loading}
-                  required
-                />
+                <div className="input-with-toggle">
+                  <input
+                    id="reg-confirm"
+                    type={showRegPassword ? "text" : "password"}
+                    placeholder="Repeat password"
+                    value={regConfirmPassword}
+                    onChange={(e) => setRegConfirmPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
               </div>
             </div>
 

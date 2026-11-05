@@ -2298,6 +2298,95 @@
 }
 
 /* =============================================================================
+   PAGINATION FOOTER CONTROLS
+============================================================================= */
+.opd-pagination-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--vt-card-border, #e5e9e2);
+  background: var(--vt-surface, #ffffff);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-summary {
+  font-size: 12.5px;
+  color: var(--vt-secondary-text, #606c5d);
+}
+
+.pagination-summary strong {
+  color: var(--vt-primary-green, #1b4332);
+}
+
+.pagination-nav-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-page-step {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--vt-card-border, #d2dbce);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--vt-primary-green, #1b4332);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-page-step:hover:not(:disabled) {
+  background: #f4f7f1;
+  border-color: var(--vt-primary-green, #1b4332);
+}
+
+.btn-page-step:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  border-color: #e5e9e2;
+}
+
+.page-number-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-page-number {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--vt-secondary-text, #495446);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-page-number:hover {
+  background: #f4f7f1;
+  color: var(--vt-primary-green, #1b4332);
+}
+
+.btn-page-number.active {
+  background: var(--vt-primary-green, #1b4332);
+  color: #ffffff;
+  border-color: var(--vt-primary-green, #1b4332);
+  box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2);
+}
+
+/* =============================================================================
    3B. CRITICAL OPD ALERTS PANEL (RIGHT COLUMN)
    ============================================================================= */
 .opd-alerts-card {

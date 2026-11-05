@@ -35,6 +35,7 @@ from database import (
     get_contradictions,
     register_patient,
     authenticate_patient,
+    seed_default_patients,
     get_patient_by_id,
     get_patient_sessions,
     authenticate_doctor,
@@ -294,6 +295,17 @@ def patient_login(request: PatientLoginRequest):
         identifier=request.identifier,
         password=request.password
     )
+    return result
+
+
+@app.post("/patient/demo")
+@app.get("/patient/demo")
+def patient_demo():
+    """Provides instant 1-click authenticated demo patient for rapid kiosk testing."""
+    result = authenticate_patient(identifier="jane@example.com", password="password123")
+    if not result.get("success"):
+        seed_default_patients()
+        result = authenticate_patient(identifier="jane@example.com", password="password123")
     return result
 
 

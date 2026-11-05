@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Activity,
@@ -22,6 +22,8 @@ export default function AdmittedPatientTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [riskFilter, setRiskFilter] = useState("all"); // 'all' | 'high' | 'medium' | 'low'
   const [conditionFilter, setConditionFilter] = useState("all"); // 'all' | 'critical' | 'stable'
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   const filteredPatients = patients.filter((p) => {
     // Search filter
@@ -46,6 +48,15 @@ export default function AdmittedPatientTable({
 
     return true;
   });
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, riskFilter, conditionFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedPatients = filteredPatients.slice(startIndex, startIndex + pageSize);
 
   return (
     <div className="opd-queue-card">
@@ -168,7 +179,7 @@ export default function AdmittedPatientTable({
                 </tr>
               </thead>
               <tbody>
-                {filteredPatients.map((pat) => {
+                {pagedPatients.map((pat) => {
                   const mewsScore = Number(pat.mews_score) || 0;
                   const riskScore = Number(pat.deterioration_risk) || 0.15;
                   const isCritical = mewsScore >= 4 || riskScore >= 0.7;
@@ -366,6 +377,49 @@ export default function AdmittedPatientTable({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* 4. PAGINATION CONTROLS */}
+        {!loading && filteredPatients.length > 0 && (
+          <div className="opd-pagination-footer">
+            <div className="pagination-summary">
+              Showing <strong>{startIndex + 1}</strong> &ndash;{" "}
+              <strong>{Math.min(startIndex + pageSize, filteredPatients.length)}</strong> of{" "}
+              <strong>{filteredPatients.length}</strong> admitted patients
+            </div>
+            <div className="pagination-nav-group">
+              <button
+                type="button"
+                className="btn-page-step"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                title="Previous page"
+              >
+                &larr; Previous
+              </button>
+              <div className="page-number-buttons">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    className={`btn-page-number ${currentPage === pg ? "active" : ""}`}
+                    onClick={() => setCurrentPage(pg)}
+                  >
+                    {pg}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="btn-page-step"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                title="Next page"
+              >
+                Next &rarr;
+              </button>
+            </div>
           </div>
         )}
       </div>
