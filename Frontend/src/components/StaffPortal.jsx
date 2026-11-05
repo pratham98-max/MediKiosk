@@ -15,6 +15,7 @@ import PriorityChip from "./ui/PriorityChip";
 import DashboardHome from "./vital_track/DashboardHome";
 import OpdQueueDashboard from "./vital_track/OpdQueueDashboard";
 import AdmittedPatientsDashboard from "./vital_track/AdmittedPatientsDashboard";
+import OPDAnalytics from "./vital_track/OPDAnalytics";
 
 // Clinical Modals
 import VitalRecorderModal from "./patient_care/VitalRecorderModal";
@@ -854,38 +855,50 @@ export default function StaffPortal({
 
           {/* VIEW 8: REPORTS & ANALYTICS */}
           {activeView === "reports" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div className="vt-card" style={{ padding: "24px" }}>
-                <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)", marginBottom: "12px" }}>
-                  Hospital Census & Deterioration Summary
-                </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "14px" }}>
-                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
-                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Total Inpatient Census</div>
-                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-dark-green)", marginTop: "4px" }}>
-                      {inpatientCensus.length}
-                    </div>
+            <div className="inpatient-workspace">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: "20px", color: "var(--vt-primary-text)" }}>Hospital Reports & Clinical Analytics</h2>
+                  <p style={{ margin: "2px 0 0", fontSize: "12.5px", color: "var(--vt-secondary-text)" }}>
+                    Real-time inpatient deterioration, bed turnover velocity, and clinical safety compliance analytics.
+                  </p>
+                </div>
+              </div>
+
+              {/* KPI Summary Cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", width: "100%" }}>
+                <div style={{ background: "#ffffff", padding: "18px 22px", borderRadius: "18px", border: "1px solid #e4ecda", boxShadow: "0 2px 8px rgba(11,33,12,0.02)" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--vt-secondary-text)" }}>Total Inpatient Census</div>
+                  <div style={{ fontSize: "30px", fontWeight: 800, color: "var(--vt-primary-text)", marginTop: "4px" }}>
+                    {inpatientCensus.length}
                   </div>
-                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
-                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>ICU Acuity Patients</div>
-                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-crimson)", marginTop: "4px" }}>
-                      {inpatientCensus.filter((p) => p.bed_type === "ICU" || (Number(p.mews_score) || 0) >= 4).length}
-                    </div>
+                </div>
+                <div style={{ background: "#ffffff", padding: "18px 22px", borderRadius: "18px", border: "1px solid #e4ecda", boxShadow: "0 2px 8px rgba(11,33,12,0.02)" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--vt-secondary-text)" }}>ICU Acuity Patients</div>
+                  <div style={{ fontSize: "30px", fontWeight: 800, color: "#dc2626", marginTop: "4px" }}>
+                    {inpatientCensus.filter((p) => p.bed_type === "ICU" || (Number(p.mews_score) || 0) >= 4).length}
                   </div>
-                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
-                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Avg Length of Stay</div>
-                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-dark-green)", marginTop: "4px" }}>
-                      2.8d
-                    </div>
+                </div>
+                <div style={{ background: "#ffffff", padding: "18px 22px", borderRadius: "18px", border: "1px solid #e4ecda", boxShadow: "0 2px 8px rgba(11,33,12,0.02)" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--vt-secondary-text)" }}>Avg Length of Stay</div>
+                  <div style={{ fontSize: "30px", fontWeight: 800, color: "var(--vt-primary-text)", marginTop: "4px" }}>
+                    2.8d
                   </div>
-                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
-                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Safety Gate Adherence</div>
-                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-mid-green)", marginTop: "4px" }}>
-                      100%
-                    </div>
+                </div>
+                <div style={{ background: "#ffffff", padding: "18px 22px", borderRadius: "18px", border: "1px solid #e4ecda", boxShadow: "0 2px 8px rgba(11,33,12,0.02)" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--vt-secondary-text)" }}>Safety Gate Adherence</div>
+                  <div style={{ fontSize: "30px", fontWeight: 800, color: "#16a34a", marginTop: "4px" }}>
+                    100%
                   </div>
                 </div>
               </div>
+
+              {/* Integrated Visual Analytics Charts */}
+              <OPDAnalytics
+                patients={opdPatients}
+                counts={counts}
+                redFlags={redFlags}
+              />
             </div>
           )}
 

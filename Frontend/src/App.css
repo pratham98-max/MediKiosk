@@ -1126,7 +1126,7 @@ body {
 
 .input-with-icon input:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  box-shadow: 0 0 0 3px rgba(40, 92, 43, 0.15);
 }
 
 .form-row {
@@ -1154,7 +1154,7 @@ body {
 .form-group input:focus,
 .form-group select:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  box-shadow: 0 0 0 3px rgba(40, 92, 43, 0.15);
 }
 
 .auth-submit-btn {
@@ -1167,14 +1167,14 @@ body {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  box-shadow: 0 4px 12px rgba(40, 92, 43, 0.25);
   transition: transform 0.1s, box-shadow 0.15s, background 0.15s;
   margin-top: 8px;
 }
 
 .auth-submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 6px 16px rgba(40, 92, 43, 0.35);
 }
 
 .auth-submit-btn:disabled {
@@ -1375,11 +1375,11 @@ body {
 
 /* Welcome Banner */
 .welcome-banner {
-  background: linear-gradient(135deg, var(--teal-deep) 0%, #174b41 100%);
+  background: linear-gradient(135deg, var(--teal-deep) 0%, #16391c 100%);
   border-radius: 20px;
   padding: 32px 36px;
-  color: white;
-  box-shadow: 0 12px 32px rgba(23, 54, 93, 0.16);
+  color: #ffffff;
+  box-shadow: 0 12px 32px rgba(11, 33, 12, 0.16);
   position: relative;
   overflow: hidden;
 }
@@ -1390,13 +1390,13 @@ body {
   gap: 6px;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(8px);
-  color: #e0efe6;
+  color: #e8f0e5;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 14px;
   border-radius: 999px;
   margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .welcome-header-content {
@@ -1409,30 +1409,33 @@ body {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2a7364, var(--teal));
+  background: linear-gradient(135deg, var(--teal), var(--teal-deep));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   font-weight: 700;
-  color: white;
-  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.4);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(11, 33, 12, 0.4);
   flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .welcome-title-group h1 {
   margin: 0 0 6px 0;
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.5px;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .welcome-subtitle {
   margin: 0 0 14px 0;
-  font-size: 14px;
-  color: var(--line);
+  font-size: 14.5px;
+  color: #d1dfd0 !important;
   max-width: 820px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .patient-meta-tags {
@@ -1442,15 +1445,17 @@ body {
 }
 
 .meta-tag {
-  background: rgba(255, 255, 255, 0.12);
-  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 5px 14px;
   border-radius: 8px;
-  font-size: 12px;
-  color: var(--paper);
+  font-size: 12.5px;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .meta-tag strong {
-  color: var(--teal);
+  color: #c9f27f !important;
+  font-weight: 700;
 }
 
 /* Welcome Grid Layout - balanced 2-column layout */
@@ -1539,7 +1544,7 @@ body {
   background: var(--teal);
   border-color: var(--teal);
   color: white;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  box-shadow: 0 2px 8px rgba(40, 92, 43, 0.25);
 }
 
 /* Doctors Grid */
@@ -1563,13 +1568,13 @@ body {
 
 .doctor-option-card:hover {
   border-color: var(--teal);
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.08);
+  box-shadow: 0 4px 14px rgba(40, 92, 43, 0.08);
 }
 
 .doctor-option-card.selected {
   border-color: var(--teal);
   background: #eef5f0;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14);
+  box-shadow: 0 4px 14px rgba(40, 92, 43, 0.14);
 }
 
 .doctor-card-icon {
@@ -1656,7 +1661,7 @@ body {
 
 .custom-input-wrap input:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+  box-shadow: 0 0 0 3px rgba(40, 92, 43, 0.12);
 }
 
 /* Visit reason chips */
@@ -1723,14 +1728,14 @@ body {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28);
+  box-shadow: 0 4px 14px rgba(40, 92, 43, 0.28);
   transition: transform 0.1s, box-shadow 0.15s;
   text-align: center;
 }
 
 .btn-proceed-consultation:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.38);
+  box-shadow: 0 6px 18px rgba(40, 92, 43, 0.38);
 }
 
 /* Sidebar Info & History */
@@ -1808,7 +1813,7 @@ body {
   transform: translateY(-2px);
   border-color: var(--teal);
   background: #eef5f0;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+  box-shadow: 0 4px 12px rgba(40, 92, 43, 0.08);
 }
 
 .step-num {
@@ -1823,7 +1828,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 2px 6px rgba(40, 92, 43, 0.3);
 }
 
 .step-body strong {
@@ -2180,7 +2185,7 @@ body {
   justify-content: center;
   align-items: flex-start;
   padding: 40px 20px;
-  background: linear-gradient(160deg, var(--teal-deep) 0%, #164239 60%, #14352e 100%);
+  background: linear-gradient(160deg, #0b210c 0%, #16391c 60%, #081a09 100%);
 }
 
 .doc-auth-card {
@@ -2365,7 +2370,7 @@ body {
   justify-content: center;
   align-items: flex-start;
   padding: 40px 20px;
-  background: linear-gradient(160deg, var(--teal-deep) 0%, #164239 60%, #14352e 100%);
+  background: linear-gradient(160deg, #0b210c 0%, #16391c 60%, #081a09 100%);
 }
 
 .doctor-auth-card {
@@ -2456,7 +2461,7 @@ body {
 
 .doc-auth-form input:focus {
   border-color: var(--teal);
-  background: rgba(74,168,232,0.1);
+  background: rgba(40,92,43,0.1);
 }
 
 .doc-auth-form input::placeholder { color: rgba(200,220,255,0.35); }
@@ -2526,8 +2531,8 @@ body {
 }
 
 .demo-doctor-chip:hover:not(:disabled) {
-  background: rgba(74,168,232,0.18);
-  border-color: rgba(74,168,232,0.4);
+  background: rgba(40,92,43,0.18);
+  border-color: rgba(40,92,43,0.4);
   transform: translateY(-1px);
 }
 
@@ -2601,7 +2606,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, var(--teal-deep), #164239);
+  background: linear-gradient(135deg, #0b210c, #16391c);
   border-radius: 16px;
   padding: 18px 24px;
   color: #e8f2ec;
@@ -2640,8 +2645,8 @@ body {
 }
 
 .doc-dept-badge {
-  background: rgba(74,168,232,0.25);
-  border: 1px solid rgba(74,168,232,0.4);
+  background: rgba(40,92,43,0.25);
+  border: 1px solid rgba(40,92,43,0.4);
   color: #74a89d;
   padding: 2px 10px;
   border-radius: 999px;
@@ -3583,7 +3588,7 @@ body {
 .doctor-header-chip { gap: 10px; }
 
 .doc-avatar-chip {
-  background: rgba(74,168,232,0.15);
+  background: rgba(40,92,43,0.15);
   border-radius: 50%;
 }
 
@@ -4095,7 +4100,7 @@ body {
   background: var(--teal);
   color: #fff;
   border-color: var(--teal);
-  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 2px 10px rgba(40, 92, 43, 0.35);
 }
 
 .table-responsive {
@@ -4550,14 +4555,15 @@ body {
 .hospital-select-header h2 {
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--paper);
+  color: var(--teal-deep) !important;
   margin: 0 0 8px;
 }
 
 .hospital-select-header p {
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--ink-soft) !important;
   font-size: 0.95rem;
   max-width: 620px;
+  line-height: 1.5;
   margin: 0 auto;
 }
 
@@ -4570,27 +4576,29 @@ body {
 }
 
 .hospital-choice-card {
-  background: rgba(18, 59, 51, 0.85);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px 20px;
+  background: #ffffff;
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 24px 22px;
   cursor: pointer;
   transition: all 0.22s;
   display: flex;
   flex-direction: column;
   position: relative;
-  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(11, 33, 12, 0.03);
 }
 
 .hospital-choice-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(14, 165, 233, 0.4);
+  border-color: var(--teal);
+  box-shadow: 0 6px 18px rgba(11, 33, 12, 0.08);
 }
 
 .hospital-choice-card.selected {
   border-color: var(--teal);
-  background: linear-gradient(135deg, rgba(31, 92, 80, 0.25), rgba(18, 59, 51, 0.85));
-  box-shadow: 0 0 24px rgba(14, 165, 233, 0.25);
+  border-width: 2px;
+  background: #f4fbf5;
+  box-shadow: 0 4px 18px rgba(40, 92, 43, 0.15);
 }
 
 .hosp-card-badge {
@@ -4603,25 +4611,25 @@ body {
 }
 
 .hosp-card-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: var(--paper);
+  color: var(--ink);
   margin-bottom: 6px;
 }
 
 .hosp-card-tagline {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
   margin-bottom: 12px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .hosp-card-address {
-  font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--line);
 }
 
 .hosp-card-footer {
@@ -4759,7 +4767,7 @@ body {
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.15s;
-  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 4px 18px rgba(40, 92, 43, 0.35);
 }
 
 .btn-consent-allow:hover {
@@ -5158,17 +5166,17 @@ body {
 .hospital-search-bar {
   display: flex;
   align-items: center;
-  background: rgba(18, 59, 51, 0.88);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: #ffffff;
+  border: 1.5px solid var(--line);
   border-radius: 12px;
-  padding: 8px 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  padding: 10px 18px;
+  box-shadow: 0 2px 10px rgba(11, 33, 12, 0.04);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .hospital-search-bar:focus-within {
   border-color: var(--teal);
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 0 3px rgba(40, 92, 43, 0.15);
 }
 
 .hospital-search-bar .search-icon {
@@ -5182,19 +5190,20 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  color: var(--paper);
+  color: var(--ink);
   font-size: 0.96rem;
   font-family: inherit;
 }
 
 .hospital-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ink-soft);
+  opacity: 0.8;
 }
 
 .clear-search-btn {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ink-soft);
   font-size: 1rem;
   cursor: pointer;
   padding: 4px 8px;
@@ -5222,8 +5231,8 @@ body {
 
 .filter-label {
   font-size: 0.82rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+  color: var(--ink-soft);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-right: 4px;
@@ -5236,21 +5245,22 @@ body {
 }
 
 .filter-chip {
-  background: rgba(18, 59, 51, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.75);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--ink);
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.18s ease;
+  box-shadow: 0 1px 4px rgba(11, 33, 12, 0.02);
 }
 
 .filter-chip:hover {
-  border-color: rgba(56, 189, 248, 0.4);
-  color: #ffffff;
-  background: rgba(14, 165, 233, 0.1);
+  border-color: var(--teal);
+  color: var(--teal);
+  background: #f4f7f1;
 }
 
 .filter-chip.active {
@@ -5258,7 +5268,7 @@ body {
   border-color: var(--teal);
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+  box-shadow: 0 2px 8px rgba(40, 92, 43, 0.25);
 }
 
 /* Empty State */
