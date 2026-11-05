@@ -1073,10 +1073,15 @@ async def upload_documents(
 
 
         uploads_dir = os.environ.get("UPLOADS_DIR", "uploads")
-        os.makedirs(
-            uploads_dir,
-            exist_ok=True
-        )
+        try:
+            os.makedirs(uploads_dir, exist_ok=True)
+            test_file = os.path.join(uploads_dir, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+        except (PermissionError, OSError):
+            uploads_dir = "uploads"
+            os.makedirs(uploads_dir, exist_ok=True)
 
         unique_filename = (
             f"{uuid.uuid4()}_{file.filename}"
