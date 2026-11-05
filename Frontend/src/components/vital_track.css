@@ -1472,7 +1472,8 @@
 
 .vt-topbar-center {
   flex: 1;
-  max-width: 420px;
+  min-width: 0;
+  max-width: 340px;
 }
 
 .vt-topbar-search-box {
@@ -1508,7 +1509,10 @@
 .vt-topbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .vt-live-sync-pill {
@@ -3432,12 +3436,14 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
 }
 
 .bed-metrics-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
+  width: 100%;
 }
 
 @media (max-width: 800px) {
@@ -3474,6 +3480,29 @@
 .bed-metric-val.available { color: #16a34a; }
 .bed-metric-val.maintenance { color: #d97706; }
 
+/* BED MGMT SPLIT LAYOUT (LEFT 7fr : RIGHT 3fr) */
+.bed-mgmt-split-layout {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .bed-mgmt-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bed-mgmt-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  width: 100%;
+}
+
 .bed-controls-bar {
   display: flex;
   align-items: center;
@@ -3484,6 +3513,7 @@
   padding: 14px 20px;
   border-radius: 18px;
   border: 1px solid #e4ecda;
+  width: 100%;
 }
 
 .bed-filter-pills {
@@ -3508,9 +3538,10 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  width: 100%;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1300px) {
   .bed-tiles-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -3655,6 +3686,237 @@
 
 .bed-assign-btn:hover {
   background: var(--vt-primary-green-hover);
+}
+
+/* SIDE PANEL STYLES: TRANSFER REQUESTS & WARD CAPACITY */
+.bed-mgmt-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  width: 100%;
+}
+
+.bed-side-panel {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e4ecda;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(11, 33, 12, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bed-side-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bed-side-panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vt-primary-text);
+  margin: 0;
+}
+
+.bed-side-badge-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.bed-transfer-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bed-transfer-card {
+  background: #f8faf5;
+  border: 1px solid #e4ecda;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bed-transfer-card.pending {
+  border-left: 3px solid #d97706;
+}
+
+.bed-transfer-card.approved {
+  border-left: 3px solid #16a34a;
+}
+
+.bed-transfer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bed-req-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.bed-req-badge.pending {
+  color: #d97706;
+}
+
+.bed-req-badge.approved {
+  color: #16a34a;
+}
+
+.bed-transfer-time {
+  font-size: 11px;
+  color: var(--vt-secondary-text);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.bed-transfer-patient {
+  font-size: 13.5px;
+  color: var(--vt-primary-text);
+}
+
+.bed-transfer-pat-id {
+  font-weight: 500;
+  color: var(--vt-secondary-text);
+  font-size: 12px;
+}
+
+.bed-transfer-route {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.bed-route-pill {
+  font-size: 11px;
+  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid #e4ecda;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--vt-primary-text);
+}
+
+.bed-route-pill.dest {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.bed-route-arrow {
+  color: var(--vt-secondary-text);
+}
+
+.bed-transfer-reason {
+  font-size: 11.5px;
+  color: var(--vt-secondary-text);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.bed-transfer-doc {
+  font-size: 11px;
+  color: var(--vt-secondary-text);
+}
+
+.bed-transfer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.bed-transfer-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.bed-transfer-btn.approve {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.bed-transfer-btn.approve:hover {
+  background: #dcfce7;
+}
+
+.bed-transfer-btn.reject {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.bed-transfer-btn.reject:hover {
+  background: #fee2e2;
+}
+
+/* WARD CAPACITY STYLES */
+.bed-ward-capacity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bed-ward-capacity-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bed-ward-capacity-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.bed-ward-name {
+  color: var(--vt-primary-text);
+  font-weight: 600;
+}
+
+.bed-ward-stat {
+  color: var(--vt-secondary-text);
+}
+
+.bed-ward-stat strong {
+  color: var(--vt-primary-text);
+}
+
+.bed-ward-prog-track {
+  width: 100%;
+  height: 7px;
+  background: #e4ecda;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bed-ward-prog-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
 
 /* =============================================================================

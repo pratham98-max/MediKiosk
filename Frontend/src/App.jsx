@@ -72,10 +72,16 @@ function App() {
   // LANGUAGE STATES
   // =========================
 
-  const [languages, setLanguages] = useState([]);
+  const FALLBACK_LANGUAGES = [
+    { code: "en", name: "English", native_name: "English" },
+    { code: "hi", name: "Hindi", native_name: "हिंदी" },
+    { code: "mr", name: "Marathi", native_name: "मराठी" },
+  ];
+
+  const [languages, setLanguages] = useState(FALLBACK_LANGUAGES);
   const [selectedLanguage, setSelectedLanguage] =
-    useState(null);
-  const [loading, setLoading] = useState(true);
+    useState(FALLBACK_LANGUAGES[0]);
+  const [loading, setLoading] = useState(false);
 
   // =========================
   // SCREEN STATE: "welcome" -> "language" -> "interview" -> "summary" -> "documents" -> "clarification" -> "finalReport"
@@ -194,19 +200,20 @@ function App() {
       })
 
       .then((data) => {
-        setLanguages(
-          data.languages || []
-        );
-
+        if (data.languages && data.languages.length > 0) {
+          setLanguages(data.languages);
+          if (!selectedLanguage) {
+            setSelectedLanguage(data.languages[0]);
+          }
+        }
         setLoading(false);
       })
 
       .catch((error) => {
-        console.error(
-          "Error fetching languages:",
+        console.warn(
+          "Could not fetch dynamic languages, using fallback:",
           error
         );
-
         setLoading(false);
       });
   }, []);
@@ -1271,7 +1278,7 @@ function App() {
           onNewConsultation={startNewPatient}
           hasActiveSession={Boolean(sessionId)}
         />
-        <main className="portal-main-content staff-portal-main">
+        <main className="portal-main-content staff-portal-main staff-full-width">
           <StaffPortal
             apiBase={API_BASE}
             currentStaff={currentStaff}

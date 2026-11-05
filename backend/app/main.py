@@ -12,6 +12,10 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from groq import Groq
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 from pydantic import BaseModel
 
 from app.services.ocr_service import extract_text_from_image
@@ -76,7 +80,29 @@ from app.services.clinical_intelligence import (
     FALLBACK_GROQ_MODEL,
 )
 
-GROQ_MODEL = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+XAI_API_KEY = os.getenv("XAI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+if XAI_API_KEY and OpenAI is not None:
+    client = OpenAI(
+        api_key=XAI_API_KEY,
+        base_url="https://api.x.ai/v1"
+    )
+    GROQ_MODEL = os.getenv("XAI_MODEL", "grok-2-latest")
+    LLM_PROVIDER = "xAI Grok"
+    print(f"[AI Engine] Initialized xAI Grok provider with model {GROQ_MODEL}")
+elif GROQ_API_KEY and not GROQ_API_KEY.startswith("gsk_placeholder"):
+    client = Groq(
+        api_key=GROQ_API_KEY
+    )
+    GROQ_MODEL = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+    LLM_PROVIDER = "Groq Cloud"
+    print(f"[AI Engine] Initialized Groq provider with model {GROQ_MODEL}")
+else:
+    client = None
+    GROQ_MODEL = DEFAULT_GROQ_MODEL
+    LLM_PROVIDER = "Clinical Intelligence Engine"
+    print("[AI Engine] Running in intelligent clinical decision engine mode.")
 
 
 # =========================

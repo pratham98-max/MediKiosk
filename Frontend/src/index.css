@@ -1,19 +1,19 @@
 :root {
-  /* Design System Palette */
-  --ink: #142420;          /* primary text */
-  --ink-soft: #3a4c47;     /* secondary/muted text */
-  --paper: #eceee6;        /* page background */
-  --panel: #f6f6f1;        /* card/panel surface */
-  --line: #cfd3c7;         /* borders, dividers */
-  --teal: #1f5c50;         /* primary accent — links, active states, patient chat bubbles */
-  --teal-deep: #123b33;    /* primary buttons, headings, active nav background */
-  --marigold: #e2a400;     /* secondary accent — highlights, progress dots, small accents */
-  --marigold-soft: #f6e3ad;/* secondary accent, soft background variant */
-  --alert: #b8452f;        /* error/danger/red-flag text and borders */
-  --alert-soft: #f1d9d1;   /* error/danger soft background */
-  --alert-strong: #7c2c1a; /* error/danger strong, solid dark alert banners */
-  --ok: #3f7457;           /* success/positive state */
-  --ok-soft: #e0efe6;      /* success light tint background */
+  /* Design System Palette - Aligned with VitalTrack & Healthcare Staff Portal */
+  --ink: #17251a;          /* primary dark text */
+  --ink-soft: #68776a;     /* secondary text / muted */
+  --paper: #f4f7f1;        /* main light background */
+  --panel: #ffffff;        /* card & panel background */
+  --line: #e4ecda;         /* subtle border & separator */
+  --teal: #285c2b;         /* primary forest green accent */
+  --teal-deep: #0b210c;    /* deep dark green (matches sidebar) */
+  --marigold: #bddc99;     /* light sage green highlight */
+  --marigold-soft: #e4ecda;/* soft light green background */
+  --alert: #dc2626;        /* error / critical red */
+  --alert-soft: #fee2e2;   /* error / critical soft red */
+  --alert-strong: #991b1b; /* strong alert crimson */
+  --ok: #16a34a;           /* stable positive green */
+  --ok-soft: #e8f7ea;      /* success light tint background */
 
   /* Legacy aliases mapping to design system */
   --text: var(--ink);
@@ -22,11 +22,11 @@
   --border: var(--line);
   --code-bg: var(--panel);
   --accent: var(--teal);
-  --accent-bg: rgba(31, 92, 80, 0.1);
-  --accent-border: rgba(31, 92, 80, 0.5);
+  --accent-bg: rgba(40, 92, 43, 0.1);
+  --accent-border: rgba(40, 92, 43, 0.4);
   --social-bg: var(--panel);
   --shadow:
-    rgba(20, 36, 32, 0.08) 0 10px 15px -3px, rgba(20, 36, 32, 0.04) 0 4px 6px -2px;
+    rgba(11, 33, 12, 0.06) 0 10px 15px -3px, rgba(11, 33, 12, 0.03) 0 4px 6px -2px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
