@@ -4,6 +4,7 @@ import {
   RefreshCw,
   ArrowLeft,
   Plus,
+  Menu,
 } from "lucide-react";
 
 export default function StaffTopbar({
@@ -17,6 +18,7 @@ export default function StaffTopbar({
   unreadAlertCount = 0,
   pageTitle = "OPD Dashboard",
   breadcrumb = "Staff Portal / OPD",
+  onToggleMobileMenu,
 }) {
   const staffInitials = currentStaff?.name
     ? currentStaff.name
@@ -31,6 +33,17 @@ export default function StaffTopbar({
     <header className="vt-staff-topbar">
       {/* 1. LEFT TITLE & BREADCRUMB */}
       <div className="vt-topbar-left">
+        {onToggleMobileMenu && (
+          <button
+            type="button"
+            className="vt-mobile-menu-btn"
+            onClick={onToggleMobileMenu}
+            title="Open navigation menu"
+            aria-label="Open staff navigation menu"
+          >
+            <Menu size={20} />
+          </button>
+        )}
         <div className="vt-breadcrumb">{breadcrumb}</div>
         <h1 className="vt-page-heading">{pageTitle}</h1>
       </div>

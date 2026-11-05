@@ -1,4 +1,10 @@
 import React, { useState, useEffect } from "react";
+import {
+  isDemoPatientId,
+  getDemoPatientUnifiedProfile,
+  updateDemoPatient,
+  getDemoPatients,
+} from "../vital_track/demoPatientsData";
 
 export default function CarePlansModal({
   apiBase,
@@ -19,6 +25,11 @@ export default function CarePlansModal({
   const fetchPlans = async () => {
     setLoading(true);
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        const demoProf = getDemoPatientUnifiedProfile(patient.patient_id);
+        setPlans(demoProf?.care_plans || []);
+        return;
+      }
       const res = await fetch(`${apiBase}/staff/patient-care/patients/${patient.patient_id}/care-plans`);
       const data = await res.json();
       if (data.care_plans) {
@@ -43,6 +54,34 @@ export default function CarePlansModal({
     setError("");
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        const newPlan = {
+          plan_id: "cp-demo-" + Date.now(),
+          patient_id: patient.patient_id,
+          session_id: patient.session_id || "demo-sess",
+          title: instructions.trim().substring(0, 45),
+          care_instructions: instructions.trim(),
+          medications: medications.trim(),
+          special_instructions: specialInst.trim(),
+          status: "active",
+          created_at: new Date().toISOString(),
+          tasks: [
+            { id: "t-task-1", text: instructions.trim(), done: false, time: "Active" },
+          ],
+        };
+        const demoPat = getDemoPatients().find((p) => p.patient_id === patient.patient_id);
+        const existingPlans = demoPat?.care_plan ? [demoPat.care_plan] : [];
+        updateDemoPatient(patient.patient_id, {
+          care_plan: newPlan,
+          care_plans: [newPlan, ...existingPlans],
+        });
+        setPlans((prev) => [newPlan, ...prev]);
+        setInstructions("");
+        setMedications("");
+        setSpecialInst("");
+        return;
+      }
+
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/care-plans?hospital_id=${hospId}`,
         {

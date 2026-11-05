@@ -9,6 +9,7 @@ import StaffPortal from "./components/StaffPortal";
 import HospitalSelector from "./components/HospitalSelector";
 import ExternalEMRConsent from "./components/ExternalEMRConsent";
 import MedicalTimeline from "./components/MedicalTimeline";
+import { parseMarkdownSections, renderMarkdownBody } from "./utils/markdownRenderer";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
@@ -1226,6 +1227,36 @@ function App() {
   // =========================
 
   if (activePortal === "staff") {
+    if (!currentStaff) {
+      return (
+        <div className="portal-page-container">
+          <PortalHeader
+            activePortal={activePortal}
+            setActivePortal={setActivePortal}
+            currentPatient={currentPatient}
+            currentDoctor={currentDoctor}
+            currentStaff={currentStaff}
+            onLogout={handleLogout}
+            onDoctorLogout={handleDoctorLogout}
+            onStaffLogout={handleStaffLogout}
+            onNewConsultation={startNewPatient}
+            hasActiveSession={Boolean(sessionId)}
+          />
+          <main className="portal-main-content">
+            <LandingShowcase>
+              <StaffPortal
+                apiBase={API_BASE}
+                currentStaff={currentStaff}
+                onStaffLogin={handleStaffLogin}
+                onStaffLogout={handleStaffLogout}
+                onSwitchToPatient={() => setActivePortal("patient")}
+              />
+            </LandingShowcase>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="portal-page-container">
         <PortalHeader
@@ -1240,7 +1271,7 @@ function App() {
           onNewConsultation={startNewPatient}
           hasActiveSession={Boolean(sessionId)}
         />
-        <main className="portal-main-content">
+        <main className="portal-main-content staff-portal-main">
           <StaffPortal
             apiBase={API_BASE}
             currentStaff={currentStaff}
@@ -1258,6 +1289,36 @@ function App() {
   // =========================
 
   if (activePortal === "doctor") {
+    if (!currentDoctor) {
+      return (
+        <div className="portal-page-container">
+          <PortalHeader
+            activePortal={activePortal}
+            setActivePortal={setActivePortal}
+            currentPatient={currentPatient}
+            currentDoctor={currentDoctor}
+            currentStaff={currentStaff}
+            onLogout={handleLogout}
+            onDoctorLogout={handleDoctorLogout}
+            onStaffLogout={handleStaffLogout}
+            onNewConsultation={startNewPatient}
+            hasActiveSession={Boolean(sessionId)}
+          />
+          <main className="portal-main-content">
+            <LandingShowcase>
+              <DoctorPortal
+                apiBase={API_BASE}
+                currentDoctor={currentDoctor}
+                onDoctorLogin={handleDoctorLogin}
+                onDoctorLogout={handleDoctorLogout}
+                onSwitchToPatient={() => setActivePortal("patient")}
+              />
+            </LandingShowcase>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="portal-page-container">
         <PortalHeader
@@ -1546,89 +1607,12 @@ function App() {
             ) : (
 
               <div className="summary-content">
-
-                {summary
-                  .split("###")
-                  .filter(
-                    (section) =>
-                      section.trim() !== ""
-                  )
-                  .map(
-                    (section, index) => {
-
-                      const lines =
-                        section
-                          .trim()
-                          .split("\n");
-
-                      const title =
-                        lines[0].trim();
-
-                      const content =
-                        lines
-                          .slice(1)
-                          .join("\n")
-                          .trim();
-
-                      const contentLines =
-                        content
-                          .split("\n")
-                          .filter(
-                            (line) =>
-                              line.trim() !== ""
-                          );
-
-                      const hasBullets =
-                        contentLines.some(
-                          (line) =>
-                            line.trim()
-                              .startsWith("•") ||
-                            line.trim()
-                              .startsWith("-")
-                        );
-
-                      return (
-                        <div
-                          className="summary-section"
-                          key={index}
-                        >
-
-                          <h2>
-                            {title}
-                          </h2>
-
-                          {hasBullets ? (
-
-                            <ul>
-
-                              {contentLines.map(
-                                (line, i) => (
-
-                                  <li key={i}>
-                                    {line
-                                      .replace(/^•/, "")
-                                      .replace(/^-/, "")
-                                      .trim()}
-                                  </li>
-
-                                )
-                              )}
-
-                            </ul>
-
-                          ) : (
-
-                            <p>
-                              {content}
-                            </p>
-
-                          )}
-
-                        </div>
-                      );
-                    }
-                  )}
-
+                {parseMarkdownSections(summary).map((section, index) => (
+                  <div className="summary-section" key={index}>
+                    <h2>{section.title}</h2>
+                    {renderMarkdownBody(section.body)}
+                  </div>
+                ))}
               </div>
 
             )}

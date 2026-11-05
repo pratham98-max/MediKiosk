@@ -25,6 +25,7 @@ import CarePlansModal from "./patient_care/CarePlansModal";
 import TransferNetworkModal from "./patient_care/TransferNetworkModal";
 import UnifiedPatientProfileModal from "./patient_care/UnifiedPatientProfileModal";
 import AdmitPatientModal from "./patient_care/AdmitPatientModal";
+import { getDemoPatients, resetDemoPatients, transferDemoPatient } from "./vital_track/demoPatientsData";
 
 export default function StaffPortal({
   apiBase,
@@ -89,6 +90,22 @@ export default function StaffPortal({
   const [activeModal, setActiveModal] = useState(null); // 'vitals' | 'xai' | 'ecg' | 'bed' | 'carePlans' | 'transfer' | 'admit'
   const [activeModalPatient, setActiveModalPatient] = useState(null);
   const [selectedBedForAdmission, setSelectedBedForAdmission] = useState("");
+
+  // =========================
+  // SYNTHETIC INPATIENT DEMO SUITE (ISOLATED STATE)
+  // =========================
+  const [demoMode, setDemoMode] = useState(true);
+  const [demoPatientsList, setDemoPatientsList] = useState(() => getDemoPatients());
+
+  const handleResetDemo = () => {
+    const fresh = resetDemoPatients();
+    setDemoPatientsList([...fresh]);
+  };
+
+  const handleTransferDemo = (pat, destination) => {
+    const updated = transferDemoPatient(pat.patient_id || pat.id, destination);
+    setDemoPatientsList([...updated]);
+  };
 
   // 1-Click Demo Logins
   const DEMO_STAFF = [
@@ -329,6 +346,34 @@ export default function StaffPortal({
     }
   };
 
+  // Memoized Effective Admitted Inpatient Census & Ward Bed States (Supports isolated demo suite)
+  const effectiveInpatientCensus = React.useMemo(() => {
+    if (!demoMode) return inpatientCensus;
+    const realAdmitted = inpatientCensus.filter(
+      (p) => (Boolean(p.bed_number) && p.bed_status === "occupied") || p.is_admitted
+    );
+    return [...demoPatientsList, ...realAdmitted];
+  }, [demoMode, inpatientCensus, demoPatientsList]);
+
+  const effectiveBeds = React.useMemo(() => {
+    if (!demoMode) return beds;
+    return beds.map((b) => {
+      const demoOcc = demoPatientsList.find((dp) => dp.bed_number === b.bed_number);
+      if (demoOcc) {
+        return {
+          ...b,
+          status: "occupied",
+          patient_id: demoOcc.patient_id,
+          patient_name: demoOcc.full_name,
+          mews_score: demoOcc.mews_score,
+          deterioration_risk: demoOcc.deterioration_risk,
+          is_demo: true,
+        };
+      }
+      return b;
+    });
+  }, [demoMode, beds, demoPatientsList]);
+
   // Modal Opener Helper
   const openModal = (type, patient) => {
     setActiveModalPatient(patient);
@@ -348,9 +393,8 @@ export default function StaffPortal({
   // =========================
   if (!currentStaff) {
     return (
-      <div className="portal-main-content">
-        <div className="doc-auth-container">
-          <div className="doc-auth-card">
+      <div className="doc-auth-container">
+        <div className="doc-auth-card">
             <div className="doc-auth-header">
               <div className="doc-auth-icon-badge">🏥</div>
               <h2>Healthcare Staff Portal</h2>
@@ -434,7 +478,6 @@ export default function StaffPortal({
             </div>
           </div>
         </div>
-      </div>
     );
   }
 
@@ -456,6 +499,15 @@ export default function StaffPortal({
         onStaffLogout={onStaffLogout}
       />
 
+      {/* MOBILE BACKDROP */}
+      {mobileMenuOpen && (
+        <div
+          className="vt-sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* 2. MAIN CONTENT AREA */}
       <main className="vt-main-content">
         {/* PREMIUM TOPBAR */}
@@ -471,6 +523,7 @@ export default function StaffPortal({
           globalSearch={globalSearch}
           onSearchChange={setGlobalSearch}
           unreadAlertCount={unacknowledgedCount}
+          onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)}
           pageTitle={
             activeView === "opd"
               ? "OPD Dashboard"
@@ -524,8 +577,8 @@ export default function StaffPortal({
           {/* VIEW 3: ADMITTED PATIENTS & WARD MAP */}
           {(activeView === "admitted" || activeView === "beds") && (
             <AdmittedPatientsDashboard
-              beds={beds}
-              patients={inpatientCensus}
+              beds={effectiveBeds}
+              patients={effectiveInpatientCensus}
               loading={loading}
               onSelectPatient={(pat) => setSelectedInpatient(pat)}
               onAllocateBed={(bed) => {
@@ -536,10 +589,14 @@ export default function StaffPortal({
               onOpenProfile={(id) => setSelectedProfilePatientId(id)}
               onOpenCaseDetails={handleOpenCaseDetails}
               onOpenECG={(pat) => openModal("ecg", pat)}
+              onTransfer={(pat) => openModal("transfer", pat)}
               onOptimizeBeds={handleOptimizeBeds}
               optimizing={optimizing}
               optimizeMessage={optimizeMessage}
               showBedManagementOnly={activeView === "beds"}
+              isDemoMode={demoMode}
+              onToggleDemoMode={() => setDemoMode((prev) => !prev)}
+              onResetDemo={handleResetDemo}
             />
           )}
 
@@ -1219,6 +1276,12 @@ export default function StaffPortal({
           patient={activeModalPatient}
           currentStaff={currentStaff}
           onClose={closeModal}
+          onTransferSuccess={(targetHosp) => {
+            if (activeModalPatient?.is_demo) {
+              handleTransferDemo(activeModalPatient, targetHosp);
+            }
+            fetchDashboardData();
+          }}
         />
       )}
 

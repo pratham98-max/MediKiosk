@@ -7,6 +7,9 @@ import {
   HeartPulse,
   ClipboardCheck,
   TrendingUp,
+  RotateCcw,
+  Radio,
+  Sparkles,
 } from "lucide-react";
 import {
   AreaChart,
@@ -26,6 +29,7 @@ import AdmittedPatientTable from "./AdmittedPatientTable";
 import InpatientCriticalAlerts from "./InpatientCriticalAlerts";
 import InpatientAiInsights from "./InpatientAiInsights";
 import BedManagementView from "./BedManagementView";
+import VitalsOverviewSection from "./VitalsOverviewSection";
 
 export default function AdmittedPatientsDashboard({
   beds = [],
@@ -36,18 +40,32 @@ export default function AdmittedPatientsDashboard({
   onAllocateBed,
   onRecordVitals,
   onOpenECG,
+  onTransfer,
   onOptimizeBeds,
   optimizing = false,
   optimizeMessage = "",
   showBedManagementOnly = false,
+  isDemoMode = false,
+  onToggleDemoMode,
+  onResetDemo,
 }) {
   const [subView, setSubView] = useState(showBedManagementOnly ? "beds" : "overview"); // 'overview' | 'beds'
   const [patientFlowRange, setPatientFlowRange] = useState("1 Day");
+  const [showLiveStream, setShowLiveStream] = useState(false);
+  const [selectedStreamPatientId, setSelectedStreamPatientId] = useState(null);
 
-  // Admitted census: patients currently assigned an active bed
+  // Admitted census: patients currently assigned an active bed (or marked admitted in demo mode)
   const admittedPatients = useMemo(() => {
-    return patients.filter((p) => Boolean(p.bed_number) && p.bed_status === "occupied");
+    return patients.filter((p) => (Boolean(p.bed_number) && p.bed_status === "occupied") || p.is_admitted);
   }, [patients]);
+
+  // Selected streaming patient for live vitals overview
+  const streamPatient = useMemo(() => {
+    if (selectedStreamPatientId) {
+      return admittedPatients.find((p) => p.patient_id === selectedStreamPatientId) || admittedPatients[0];
+    }
+    return admittedPatients.find((p) => p.scenario === "high_mews") || admittedPatients[0] || {};
+  }, [admittedPatients, selectedStreamPatientId]);
 
   // Bed metrics
   const totalBeds = beds.length || 9;
@@ -69,8 +87,8 @@ export default function AdmittedPatientsDashboard({
   // 1. WARD UTILIZATION DATA FOR CIRCULAR GAUGES (VitalTrack reference)
   const wardGauges = useMemo(() => {
     const wards = [
-      { id: "general", name: "General Ward", beds: beds.filter((b) => b.bed_type === "General" || b.bed_type === "Ward") },
-      { id: "icu", name: "ICU", beds: beds.filter((b) => b.bed_type === "ICU") },
+      { id: "general", name: "General Ward", beds: beds.filter((b) => b.bed_type === "General" || b.bed_type === "Ward" || b.bed_type === "general") },
+      { id: "icu", name: "ICU", beds: beds.filter((b) => b.bed_type === "ICU" || b.bed_type === "icu") },
       { id: "recovery", name: "Recovery", beds: beds.filter((b) => b.bed_type === "Recovery" || b.bed_type === "StepDown") },
       { id: "emergency", name: "Emergency", beds: beds.filter((b) => b.bed_type === "Emergency") },
     ];
@@ -91,7 +109,7 @@ export default function AdmittedPatientsDashboard({
     });
   }, [beds]);
 
-  // 2. PATIENT ADMISSION FLOW (Area line chart)
+  // 2. PATIENT ADMISSION FLOW (Area line chart - Distinct Blue/Teal clinical palette)
   const patientFlowData = useMemo(() => {
     if (admittedPatients.length === 0) {
       return [
@@ -104,11 +122,10 @@ export default function AdmittedPatientsDashboard({
         { day: "Sun", admissions: 2 },
       ];
     }
-    // Group by day of week or arrival slots
     const days = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
     admittedPatients.forEach((p) => {
       try {
-        const d = new Date(p.created_at || "2026-05-11T08:00:00");
+        const d = new Date(p.created_at || "2026-11-05T08:00:00");
         const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
         if (days[dayName] !== undefined) days[dayName]++;
         else days["Wed"]++;
@@ -119,7 +136,7 @@ export default function AdmittedPatientsDashboard({
     return Object.entries(days).map(([day, admissions]) => ({ day, admissions }));
   }, [admittedPatients]);
 
-  // 3. XAI RISK DISTRIBUTION (DONUT CHART)
+  // 3. XAI RISK DISTRIBUTION (DONUT CHART - Green, Amber, Red Segments)
   const riskDonutData = useMemo(() => {
     let low = 0;
     let med = 0;
@@ -133,22 +150,23 @@ export default function AdmittedPatientsDashboard({
     });
 
     return [
-      { name: "Low Risk", value: Math.max(low, admittedPatients.length === 0 ? 3 : 0), color: "#285c2b" },
-      { name: "Medium Risk", value: Math.max(med, admittedPatients.length === 0 ? 1 : 0), color: "#d97706" },
-      { name: "High Risk", value: Math.max(high, admittedPatients.length === 0 ? 1 : 0), color: "#dc2626" },
+      { name: "Low Risk (<40%)", value: Math.max(low, admittedPatients.length === 0 ? 3 : 0), color: "#16a34a" },
+      { name: "Medium Risk (40-69%)", value: Math.max(med, admittedPatients.length === 0 ? 1 : 0), color: "#d97706" },
+      { name: "High Risk (≥70%)", value: Math.max(high, admittedPatients.length === 0 ? 1 : 0), color: "#dc2626" },
     ].filter((item) => item.value > 0);
   }, [admittedPatients]);
 
-  // 4. DISCHARGE READINESS (CIRCULAR RADIAL DISTRIBUTION)
+  // 4. DISCHARGE READINESS (CONCENTRIC SEGMENTED RADIAL VISUALIZATION)
   const dischargeData = useMemo(() => {
     const ready = dischargeReadyPatients.length;
-    const review = admittedPatients.length - ready - criticalPatients.length;
+    const review = Math.max(0, admittedPatients.length - ready - criticalPatients.length);
     const notReady = criticalPatients.length;
+    const total = Math.max(1, admittedPatients.length);
 
     return [
-      { name: "Ready for Discharge", value: Math.max(0, ready), color: "#285c2b" },
-      { name: "Under Observation", value: Math.max(0, review), color: "#d97706" },
-      { name: "High Care / Not Ready", value: Math.max(0, notReady), color: "#dc2626" },
+      { name: "Ready for Discharge", value: ready, color: "#10b981", pct: Math.round((ready / total) * 100), r: 42, stroke: 8 },
+      { name: "Under Clinical Review", value: review, color: "#3b82f6", pct: Math.round((review / total) * 100), r: 31, stroke: 7 },
+      { name: "Not Ready (High Care)", value: notReady, color: "#ef4444", pct: Math.round((notReady / total) * 100), r: 21, stroke: 6 },
     ];
   }, [dischargeReadyPatients, admittedPatients, criticalPatients]);
 
@@ -187,6 +205,163 @@ export default function AdmittedPatientsDashboard({
 
   return (
     <div className="inpatient-workspace">
+      {/* DEMO / SIMULATION CONTROL & LIVE VITALS STREAM HEADER */}
+      <div
+        className="inpatient-demo-bar"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          padding: "12px 18px",
+          background: isDemoMode ? "linear-gradient(90deg, #f0fdf4 0%, #ffffff 100%)" : "#ffffff",
+          border: "1px solid #d1fae5",
+          borderRadius: "14px",
+          marginBottom: "16px",
+          boxShadow: "0 2px 8px rgba(22, 57, 28, 0.04)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              background: "#047857",
+              color: "#ffffff",
+              padding: "4px 10px",
+              borderRadius: "999px",
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.5px",
+            }}
+          >
+            <Sparkles size={12} />
+            DEMO MODE
+          </span>
+          <span style={{ fontSize: "13px", fontWeight: 600, color: "#16391C" }}>
+            Synthetic Admitted Census (5 Clinical Scenarios: Stable, High MEWS, High XAI, Abnormal Vitals, Transfer)
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {onResetDemo && (
+            <button
+              type="button"
+              className="opd-action-btn secondary"
+              onClick={onResetDemo}
+              style={{ fontSize: "12px", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+              title="Reset demo patients and simulated trends to initial baseline"
+            >
+              <RotateCcw size={13} />
+              Reset Demo
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="opd-action-btn primary"
+            onClick={() => setShowLiveStream((prev) => !prev)}
+            style={{
+              fontSize: "12px",
+              padding: "6px 14px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              background: showLiveStream ? "#065f46" : "#285C2B",
+            }}
+          >
+            <Radio size={13} />
+            {showLiveStream ? "Hide Live Telemetry" : "Simulated Live Vitals Monitor"}
+          </button>
+        </div>
+      </div>
+
+      {/* COLLAPSIBLE LIVE VITALS MONITORING SECTION (ADMITTED INPATIENTS ONLY - SEC 14) */}
+      {showLiveStream && (
+        <section
+          style={{
+            background: "#ffffff",
+            border: "1px solid #cbe0c5",
+            borderRadius: "16px",
+            padding: "18px 20px",
+            marginBottom: "20px",
+            boxShadow: "0 4px 18px rgba(22, 57, 28, 0.06)",
+          }}
+          aria-label="Simulated Live Vitals Telemetry"
+        >
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              marginBottom: "14px",
+              borderBottom: "1px solid #e4ecda",
+              paddingBottom: "12px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "8px",
+                  background: "#f0fdf4",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#047857",
+                }}
+              >
+                <Activity size={18} />
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#16391C" }}>
+                  Continuous Bedside Telemetry Stream
+                </h4>
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#556B2F" }}>
+                  Real-time physiological observation engine (2s frequency, Subbe 2001 MEWS algorithm)
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <label htmlFor="stream-patient-select" style={{ fontSize: "12px", fontWeight: 600, color: "#16391C" }}>
+                Active Inpatient:
+              </label>
+              <select
+                id="stream-patient-select"
+                value={selectedStreamPatientId || streamPatient?.patient_id || ""}
+                onChange={(e) => setSelectedStreamPatientId(e.target.value)}
+                style={{
+                  fontSize: "12px",
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbe0c5",
+                  background: "#fbfdf9",
+                  color: "#16391C",
+                  fontWeight: 600,
+                }}
+              >
+                {admittedPatients.map((p) => (
+                  <option key={p.patient_id} value={p.patient_id}>
+                    {p.name || p.full_name} · Bed {p.bed_number || "GEN-101"} (MEWS: {p.mews_score || 0}
+                    {p.scenario ? ` · ${p.scenario.toUpperCase()}` : ""})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <VitalsOverviewSection
+            vitals={{ latest: streamPatient }}
+            mews={streamPatient?.mews_score || 0}
+          />
+        </section>
+      )}
+
       {/* 1. TOP 6 KPI CARDS WITH EMBEDDED MINI VISUALISATIONS */}
       <section className="inpatient-kpi-grid" aria-label="Inpatient VitalTrack KPI Overview">
         {/* Card 1: Total Admitted Patients */}
@@ -281,6 +456,7 @@ export default function AdmittedPatientsDashboard({
             onOpenCaseDetails={onOpenCaseDetails} // View case allowed
             onRecordVitals={onRecordVitals}
             onOpenECG={onOpenECG}
+            onTransfer={onTransfer}
             onSwitchToBedMap={() => setSubView("beds")}
           />
         </div>
@@ -343,8 +519,8 @@ export default function AdmittedPatientsDashboard({
                 <AreaChart data={patientFlowData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="admissionFlowGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#285C2B" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#285C2B" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4ecda" />
@@ -361,7 +537,7 @@ export default function AdmittedPatientsDashboard({
                   <Area
                     type="monotone"
                     dataKey="admissions"
-                    stroke="#285C2B"
+                    stroke="#0284c7"
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#admissionFlowGradient)"
@@ -503,39 +679,79 @@ export default function AdmittedPatientsDashboard({
             </div>
 
             <div className="inpatient-chart-canvas">
-              <div className="inpatient-discharge-radial-wrap">
-                <div className="inpatient-discharge-bars">
-                  {dischargeData.map((d, idx) => {
-                    const total = admittedPatients.length || 1;
-                    const pct = Math.round((d.value / total) * 100);
-                    return (
-                      <div key={idx} className="inpatient-discharge-item">
-                        <div className="inpatient-discharge-meta">
-                          <span className="inpatient-discharge-name">{d.name}</span>
-                          <span className="inpatient-discharge-val">
-                            <strong>{d.value}</strong> ({pct}%)
-                          </span>
-                        </div>
-                        <div className="inpatient-discharge-progress-bg">
-                          <div
-                            className="inpatient-discharge-progress-fill"
-                            style={{ width: `${Math.max(5, pct)}%`, background: d.color }}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", gap: "16px", padding: "8px 0" }}>
+                {/* Concentric Segmented Radial Rings (SVG) */}
+                <div style={{ position: "relative", width: "136px", height: "136px", flexShrink: 0 }}>
+                  <svg viewBox="0 0 120 120" style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}>
+                    {dischargeData.map((d, idx) => {
+                      const radius = d.r || (46 - idx * 12);
+                      const strokeWidth = d.stroke || 8;
+                      const circumference = 2 * Math.PI * radius;
+                      const strokeOffset = circumference - (circumference * Math.min(100, d.pct)) / 100;
+                      return (
+                        <g key={idx}>
+                          {/* Track */}
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke="#e4ecda"
+                            strokeWidth={strokeWidth}
+                            opacity={0.5}
                           />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="inpatient-discharge-badge-box">
-                  <div className="inpatient-discharge-badge-inner">
-                    <span style={{ fontSize: "28px", fontWeight: 800, color: "var(--vt-primary-green)" }}>
+                          {/* Segmented Arc Fill */}
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            fill="none"
+                            stroke={d.color}
+                            strokeWidth={strokeWidth}
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeOffset}
+                            strokeLinecap="round"
+                            style={{ transition: "stroke-dashoffset 0.8s ease" }}
+                          />
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  {/* Concentric Radial Center Core */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <span style={{ fontSize: "22px", fontWeight: 800, color: "#16391C", lineHeight: 1 }}>
                       {dischargeReadyPatients.length}
                     </span>
-                    <span style={{ fontSize: "11px", color: "var(--vt-secondary-text)" }}>
-                      Ready for Ward Discharge
+                    <span style={{ fontSize: "9.5px", fontWeight: 600, color: "#556B2F", marginTop: "2px" }}>
+                      Ready
                     </span>
                   </div>
+                </div>
+
+                {/* Legend & Percentages */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1, minWidth: "140px" }}>
+                  {dischargeData.map((d, idx) => (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", fontSize: "11.5px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: d.color, flexShrink: 0 }} />
+                        <span style={{ color: "var(--vt-primary-text)", fontWeight: 500 }}>{d.name}</span>
+                      </div>
+                      <span style={{ fontWeight: 700, color: d.color, whiteSpace: "nowrap" }}>
+                        {d.value} ({d.pct}%)
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

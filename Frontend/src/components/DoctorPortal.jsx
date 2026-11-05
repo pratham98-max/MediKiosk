@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import MedicalTimeline from "./MedicalTimeline";
+import { parseMarkdownSections, renderMarkdownBody } from "../utils/markdownRenderer";
 
 export default function DoctorPortal({
   apiBase,
@@ -601,6 +602,9 @@ export default function DoctorPortal({
           <div className="otp-input-group">
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="one-time-code"
               placeholder="e.g. 849201"
               maxLength={6}
               value={otpInput}
@@ -984,34 +988,13 @@ export default function DoctorPortal({
                           </p>
                         </div>
 
-                        {(activeSession.session.doctor_edited_report || activeSession.session.final_report)
-                          .split("###")
-                          .filter((s) => s.trim() !== "")
+                        {parseMarkdownSections(activeSession.session.doctor_edited_report || activeSession.session.final_report)
                           .map((sec, idx) => {
-                            const lines = sec.trim().split("\n");
-                            const title = lines[0].trim();
-                            const body = lines.slice(1).join("\n").trim();
-                            const bodyLines = body
-                              .split("\n")
-                              .filter((l) => l.trim() !== "");
-                            const isBullets = bodyLines.some(
-                              (l) => l.trim().startsWith("•") || l.trim().startsWith("-")
-                            );
-
+                            const isTimeline = sec.title.toLowerCase().includes("timeline");
                             return (
                               <div key={idx} className="clinical-section-card">
-                                <h4>{title}</h4>
-                                {isBullets ? (
-                                  <ul>
-                                    {bodyLines.map((l, i) => (
-                                      <li key={i}>
-                                        {l.replace(/^•/, "").replace(/^-/, "").trim()}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p style={{ whiteSpace: "pre-wrap" }}>{body}</p>
-                                )}
+                                <h4>{sec.title}</h4>
+                                {renderMarkdownBody(sec.body, isTimeline)}
                               </div>
                             );
                           })}

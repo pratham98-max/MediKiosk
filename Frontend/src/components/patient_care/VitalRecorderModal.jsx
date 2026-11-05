@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import {
+  isDemoPatientId,
+  recordDemoVitals,
+  getDemoPatientUnifiedProfile,
+} from "../vital_track/demoPatientsData";
 
 export default function VitalRecorderModal({
   apiBase,
@@ -28,6 +33,13 @@ export default function VitalRecorderModal({
     if (!patient?.patient_id) return;
     setHistoryLoading(true);
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        const demoProf = getDemoPatientUnifiedProfile(patient.patient_id);
+        if (demoProf?.vitals?.history) {
+          setHistory(demoProf.vitals.history);
+        }
+        return;
+      }
       const res = await fetch(`${apiBase}/staff/patient-care/patients/${patient.patient_id}/vitals/history`);
       const data = await res.json();
       if (data.history) {
@@ -146,6 +158,28 @@ export default function VitalRecorderModal({
     setSubmitting(true);
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        const recorded = recordDemoVitals(
+          patient.patient_id,
+          {
+            heart_rate: Number(heartRate),
+            blood_pressure_sys: Number(bpSys),
+            blood_pressure_dia: Number(bpDia),
+            respiratory_rate: Number(respRate),
+            temperature: Number(temperature),
+            oxygen_saturation: Number(spo2),
+            observation_source: observationSource,
+          },
+          currentStaff?.staff_id
+        );
+        setSuccessMsg(`✓ Vital observation recorded successfully! MEWS: ${recorded.mews_score} points.`);
+        if (onVitalsRecorded) {
+          onVitalsRecorded({ vitals: recorded, message: "Vital observation recorded" });
+        }
+        fetchHistory();
+        return;
+      }
+
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/vitals?hospital_id=${currentStaff?.hospital_id || "hosp-medikiosk"}`,
         {

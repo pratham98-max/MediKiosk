@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { isDemoPatientId, getDemoPatientUnifiedProfile } from "../vital_track/demoPatientsData";
 
 export default function XAIRiskModal({
   apiBase,
@@ -15,6 +16,32 @@ export default function XAIRiskModal({
     setError("");
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        const demoProf = getDemoPatientUnifiedProfile(patient.patient_id);
+        const ml = demoProf?.risk_assessments?.[0];
+        const riskScore = ml?.predicted_risk ?? (patient.deterioration_risk || 0.25);
+        const expl = ml?.explanations?.[0];
+        setAssessmentData({
+          success: true,
+          patient_id: patient.patient_id,
+          model: modelName,
+          prediction: {
+            critical_risk: riskScore,
+            is_critical: riskScore >= 0.7,
+            confidence: ml?.confidence || 0.92,
+          },
+          explanation: {
+            explanation_method: "clinical_feature_attribution",
+            contributing_factors: expl?.contributing_factors || [
+              { factor: "Cardiorespiratory Stability", contribution: "34%", direction: "elevates_risk" },
+            ],
+            recommended_action: expl?.recommended_action || "Maintain routine bedside monitoring protocol.",
+            disclaimer: "Machine learning prediction is an auxiliary decision aid.",
+          },
+        });
+        return;
+      }
+
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/risk-assessment`,
         {

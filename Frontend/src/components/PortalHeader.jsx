@@ -12,16 +12,6 @@ export default function PortalHeader({
   onNewConsultation,
   hasActiveSession,
 }) {
-  // Determine which role is currently authenticated
-  const isPatientLoggedIn = Boolean(currentPatient);
-  const isDoctorLoggedIn = Boolean(currentDoctor);
-  const isStaffLoggedIn = Boolean(currentStaff);
-  // Determine login state for the active portal
-  const isCurrentPortalLoggedIn =
-    (activePortal === "patient" && isPatientLoggedIn) ||
-    (activePortal === "doctor" && isDoctorLoggedIn) ||
-    (activePortal === "staff" && isStaffLoggedIn);
-
   return (
     <header className="portal-header">
       <div className="header-brand">
@@ -34,80 +24,39 @@ export default function PortalHeader({
         </div>
       </div>
 
-      {/* Role Switcher / Tab */}
+      {/* Role Switcher / Tabs – Always visible so user can freely switch between portals */}
       <div className="portal-switcher">
-        {isCurrentPortalLoggedIn ? (
-          // ONCE LOGGED IN: show ONLY the portal belonging to the authenticated user
-          <>
-            {activePortal === "patient" && isPatientLoggedIn && (
-              <button
-                type="button"
-                className="portal-tab active"
-                disabled
-              >
-                <span className="tab-icon">👤</span>
-                <span>Patient Portal</span>
-              </button>
-            )}
+        <button
+          type="button"
+          className={`portal-tab ${activePortal === "patient" ? "active" : ""}`}
+          onClick={() => setActivePortal && setActivePortal("patient")}
+        >
+          <span className="tab-icon">👤</span>
+          <span>Patient Portal</span>
+        </button>
 
-            {activePortal === "doctor" && isDoctorLoggedIn && (
-              <button
-                type="button"
-                className="portal-tab active"
-                disabled
-              >
-                <span className="tab-icon">🩺</span>
-                <span>Doctor Portal</span>
-              </button>
-            )}
+        <button
+          type="button"
+          className={`portal-tab ${activePortal === "doctor" ? "active" : ""}`}
+          onClick={() => setActivePortal && setActivePortal("doctor")}
+        >
+          <span className="tab-icon">🩺</span>
+          <span>Doctor Portal</span>
+        </button>
 
-            {activePortal === "staff" && isStaffLoggedIn && (
-              <button
-                type="button"
-                className="portal-tab active"
-                disabled
-              >
-                <span className="tab-icon">🏥</span>
-                <span>Healthcare Staff</span>
-              </button>
-            )}
-          </>
-        ) : (
-          // BEFORE LOGIN: all portal login options appear in header so user can switch between logins
-          <>
-            <button
-              type="button"
-              className={`portal-tab ${activePortal === "patient" ? "active" : ""}`}
-              onClick={() => setActivePortal && setActivePortal("patient")}
-            >
-              <span className="tab-icon">👤</span>
-              <span>Patient Portal</span>
-            </button>
-
-            <button
-              type="button"
-              className={`portal-tab ${activePortal === "doctor" ? "active" : ""}`}
-              onClick={() => setActivePortal && setActivePortal("doctor")}
-            >
-              <span className="tab-icon">🩺</span>
-              <span>Doctor Portal</span>
-            </button>
-
-            <button
-              type="button"
-              className={`portal-tab ${activePortal === "staff" ? "active" : ""}`}
-              onClick={() => setActivePortal && setActivePortal("staff")}
-            >
-              <span className="tab-icon">🏥</span>
-              <span>Healthcare Staff</span>
-            </button>
-          </>
-        )}
+        <button
+          type="button"
+          className={`portal-tab ${activePortal === "staff" ? "active" : ""}`}
+          onClick={() => setActivePortal && setActivePortal("staff")}
+        >
+          <span className="tab-icon">🏥</span>
+          <span>Healthcare Staff</span>
+        </button>
       </div>
 
-      {/* User Status / Actions */}
+      {/* User Status / Actions – Based strictly on active portal */}
       <div className="header-actions">
-        {isPatientLoggedIn ? (
+        {activePortal === "patient" && currentPatient ? (
           <div className="patient-user-chip">
             <div className="user-avatar">
               {currentPatient.full_name?.charAt(0).toUpperCase() || "P"}
@@ -137,7 +86,7 @@ export default function PortalHeader({
               Log Out
             </button>
           </div>
-        ) : isDoctorLoggedIn ? (
+        ) : activePortal === "doctor" && currentDoctor ? (
           <div className="patient-user-chip doctor-header-chip">
             <div className="user-avatar doc-avatar-chip">🩺</div>
             <div className="user-details">
@@ -153,12 +102,12 @@ export default function PortalHeader({
               Log Out
             </button>
           </div>
-        ) : isStaffLoggedIn ? (
+        ) : activePortal === "staff" && currentStaff ? (
           <div className="patient-user-chip staff-header-chip">
             <div className="user-avatar staff-avatar-chip">🏥</div>
             <div className="user-details">
               <span className="user-name">{currentStaff.name}</span>
-              <span className="user-id">{currentStaff.hospital_name || "Hospital Staff"}</span>
+              <span className="user-id">{currentStaff.hospital_name || currentStaff.hospital || "Hospital Staff"}</span>
             </div>
             <button
               type="button"

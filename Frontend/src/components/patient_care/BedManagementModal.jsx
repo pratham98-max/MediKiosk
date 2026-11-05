@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { isDemoPatientId, updateDemoPatient } from "../vital_track/demoPatientsData";
 
 export default function BedManagementModal({
   apiBase,
@@ -26,6 +27,19 @@ export default function BedManagementModal({
     setSuccessMsg("");
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        updateDemoPatient(patient.patient_id, {
+          is_admitted: false,
+          admission_status: "discharged",
+          bed_status: "vacated",
+          bed_number: null,
+          discharge_ready: true,
+        });
+        setSuccessMsg(`Patient discharged successfully. Bed freed.`);
+        if (onBedUpdated) onBedUpdated();
+        return;
+      }
+
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/bed?hospital_id=${hospId}`,
         {
@@ -56,8 +70,19 @@ export default function BedManagementModal({
     setSuccessMsg("");
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        updateDemoPatient(patient.patient_id, {
+          bed_number: "ICU-205",
+          bed_type: "ICU",
+          ward: "Intensive Care Unit",
+          needs_icu: true,
+        });
+        setSuccessMsg(`Patient upgraded to ICU Bed ICU-205 successfully.`);
+        if (onBedUpdated) onBedUpdated();
+        return;
+      }
+
       const res = await fetch(
-        `${apiBase}/staff/patient-care/patients/${patient.patient_id}/upgrade-icu?hospital_id=${hospId}`,
         { method: "POST" }
       );
       const data = await res.json();
@@ -78,6 +103,19 @@ export default function BedManagementModal({
     setSuccessMsg("");
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        updateDemoPatient(patient.patient_id, {
+          is_admitted: false,
+          admission_status: "discharged",
+          bed_status: "vacated",
+          bed_number: null,
+          discharge_ready: true,
+        });
+        setSuccessMsg(`Patient discharged successfully. Bed freed.`);
+        if (onBedUpdated) onBedUpdated();
+        return;
+      }
+
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/discharge?hospital_id=${hospId}&override=${overrideDischarge}`,
         { method: "POST" }

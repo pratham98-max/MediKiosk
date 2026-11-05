@@ -3,7 +3,52 @@
 .lp-h1{font-size:clamp(28px,3.6vw,46px);line-height:1.05;letter-spacing:-.02em;color:var(--teal-deep);margin:8px 0 12px;max-width:16em}
 .lp-sub{color:var(--ink-soft);max-width:36em;margin:0 0 24px;font-size:16px;line-height:1.55}
 .lp-auth{position:sticky;top:96px}
-.lp-auth .auth-wrapper{padding:0;max-width:none}
+.lp-auth .auth-wrapper,
+.lp-auth .doctor-portal-auth-container,
+.lp-auth .doc-auth-container{padding:0;max-width:none;width:100%;min-height:auto;display:flex;justify-content:center}
+.lp-auth .doctor-auth-card,
+.lp-auth .doc-auth-card{background:var(--panel,#ffffff);border-radius:20px;padding:32px 30px;box-shadow:0 16px 40px rgba(15,23,42,0.08),0 2px 6px rgba(15,23,42,0.04);border:1px solid var(--line,#e4ecda);color:var(--ink,#1f2937);max-width:100%;width:100%;backdrop-filter:none}
+.lp-auth .doctor-auth-card h2,
+.lp-auth .doc-auth-card h2{color:#16391C}
+.lp-auth .doc-auth-subtitle,
+.lp-auth .doc-auth-card p{color:#556B2F}
+.lp-auth .doc-auth-form label,
+.lp-auth .form-group label{color:#1f2937}
+.lp-auth .doc-form-group input,
+.lp-auth .form-group input{background:#fbfdf9;border:1px solid #d5e2d0;color:#111827}
+.lp-auth .doc-preset-btn{background:#f4f8f2;border:1px solid #cbe0c5;color:#16391C}
+.lp-auth .doc-preset-btn:hover{background:#e7f2e3}
+
+/* Quick 1-Click Login Cards for Doctor and Staff inside Landing Showcase */
+.lp-auth .doc-auth-divider,
+.lp-auth .quick-access-divider{margin:20px 0 14px;text-align:center;position:relative}
+.lp-auth .doc-auth-divider::before,
+.lp-auth .quick-access-divider::before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:#e4ecda}
+.lp-auth .doc-auth-divider span,
+.lp-auth .quick-access-divider span{position:relative;background:var(--panel,#ffffff);padding:0 12px;font-size:11.5px;font-weight:700;color:#556B2F;letter-spacing:0.5px}
+
+.lp-auth .demo-doctors-grid,
+.lp-auth .staff-demo-cards-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+
+.lp-auth .demo-doctor-chip,
+.lp-auth .staff-demo-pill{background:#f7faf5;border:1px solid #cbe0c5;color:#16391C;border-radius:12px;padding:11px 14px;text-align:left;cursor:pointer;transition:all 0.2s ease;box-shadow:0 1px 4px rgba(22,57,28,0.04);display:flex;align-items:center;gap:12px;width:100%}
+.lp-auth .demo-doctor-chip:hover:not(:disabled),
+.lp-auth .staff-demo-pill:hover:not(:disabled){background:#edf5ea;border-color:#285C2B;transform:translateY(-1px);box-shadow:0 3px 8px rgba(22,57,28,0.08)}
+
+.lp-auth .demo-doc-text strong,
+.lp-auth .demo-doc-name{color:#16391C!important;font-size:13.5px!important;font-weight:700!important}
+.lp-auth .demo-doc-dept,
+.lp-auth .demo-doc-hosp{color:#0284c7!important;font-size:12px!important;font-weight:600!important}
+.lp-auth .demo-doc-room,
+.lp-auth .demo-doc-spec{color:#4b5563!important;font-size:11.5px!important;font-weight:500!important}
+.lp-auth .demo-doc-spec em{color:#047857!important;font-style:normal!important;font-weight:600!important}
+.lp-auth .demo-doc-icon{font-size:1.4rem;flex-shrink:0}
+.lp-auth .demo-arrow{color:#285C2B;font-weight:700;margin-left:auto}
+
+.lp-auth .btn-switch-to-patient,
+.lp-auth .btn-switch-portal{background:#f4f8f2;border:1px solid #cbe0c5;color:#16391C;font-size:12.5px;font-weight:600;border-radius:8px;padding:8px 16px;cursor:pointer;transition:all 0.2s ease;display:inline-block;width:100%;text-align:center}
+.lp-auth .btn-switch-to-patient:hover,
+.lp-auth .btn-switch-portal:hover{background:#e7f2e3;color:#065f46;border-color:#285C2B}
 .lp-tablet,.lp-tablet *{line-height:1.2;letter-spacing:0;font-family:inherit}
 .lp-tablet table,.lp-tablet th,.lp-tablet td,.lp-tablet tr{border:0;background:none;margin:0;height:auto;vertical-align:middle;white-space:nowrap}
 .lp-tablet h3,.lp-tablet p,.lp-tablet small,.lp-tablet strong,.lp-tablet em,.lp-tablet b{margin:0;padding:0}
@@ -31,7 +76,7 @@
 .lp-user small{display:block;color:#8a959b;font-size:.75cqw}
 .lp-av{width:2.8cqw;height:2.8cqw;border-radius:50%;background:radial-gradient(circle at 50% 38%,#e8b79a 0 28%,var(--teal) 30% 100%)}
 .lp-heart{left:8cqw;top:12cqw;width:28cqw;height:32cqw}
-.lp-heart svg{width:100%;height:100%;overflow:visible}
+.lp-heart img,.lp-heart svg{width:100%;height:100%;object-fit:contain}
 .lp-glowbg{left:-2cqw;bottom:-3cqw;width:22cqw;height:22cqw;border-radius:50%;background:radial-gradient(#fff,rgba(255,255,255,0) 70%)}
 .lp-link{inset:0;width:100%;height:100%;pointer-events:none}
 .lp-line{stroke:#fff;stroke-width:1.2;fill:none;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 1px rgba(60,60,80,.6))}

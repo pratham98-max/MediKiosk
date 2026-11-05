@@ -23,18 +23,17 @@ export default function StaffSidebar({
 }) {
   const staffInitials = currentStaff?.name
     ? currentStaff.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .substring(0, 2)
-        .toUpperCase()
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase()
     : "ST";
 
   return (
     <aside
-      className={`vt-dark-sidebar ${isCollapsed ? "collapsed" : ""} ${
-        isMobileOpen ? "open-mobile" : ""
-      }`}
+      className={`vt-dark-sidebar ${isCollapsed ? "collapsed" : ""} ${isMobileOpen ? "open-mobile" : ""
+        }`}
       aria-label="Staff workstation navigation"
     >
       <div className="vt-dark-sidebar-content">
@@ -65,12 +64,12 @@ export default function StaffSidebar({
           </button>
         </div>
 
-        {/* NAVIGATION LIST (Strictly following the user request & VitalTrack reference) */}
+        {/* NAVIGATION LIST (5 Required Workstation Sections) */}
         <nav className="vt-dark-nav-body">
           <div className="vt-dark-nav-section">
             {!isCollapsed && <span className="vt-dark-section-label">Main</span>}
 
-            {/* 1. OPD DASHBOARD */}
+            {/* 1. PATIENT QUEUE */}
             <button
               type="button"
               className={`vt-dark-nav-item ${activeView === "opd" ? "active" : ""}`}
@@ -83,18 +82,17 @@ export default function StaffSidebar({
               <span className="vt-dark-nav-icon">
                 <Users size={18} />
               </span>
-              {!isCollapsed && <span className="vt-dark-nav-label">OPD Queue</span>}
+              {!isCollapsed && <span className="vt-dark-nav-label">Patient Queue</span>}
               {unreadAlertCount > 0 && !isCollapsed && (
                 <span className="vt-dark-alert-badge">{unreadAlertCount}</span>
               )}
             </button>
 
-            {/* 2. INPATIENT CARE (ADMITTED PATIENTS) */}
+            {/* 2. ADMITTED PATIENTS */}
             <button
               type="button"
-              className={`vt-dark-nav-item ${
-                activeView === "admitted" ? "active" : ""
-              }`}
+              className={`vt-dark-nav-item ${activeView === "admitted" ? "active" : ""
+                }`}
               onClick={() => {
                 onSelectView("admitted");
                 if (onCloseMobile) onCloseMobile();
@@ -138,6 +136,22 @@ export default function StaffSidebar({
               </span>
               {!isCollapsed && <span className="vt-dark-nav-label">Reports & Analytics</span>}
             </button>
+
+            {/* 5. SETTINGS */}
+            <button
+              type="button"
+              className={`vt-dark-nav-item ${activeView === "settings" ? "active" : ""}`}
+              onClick={() => {
+                onSelectView("settings");
+                if (onCloseMobile) onCloseMobile();
+              }}
+              title="Workstation Settings & Hospital Configuration"
+            >
+              <span className="vt-dark-nav-icon">
+                <Settings size={18} />
+              </span>
+              {!isCollapsed && <span className="vt-dark-nav-label">Settings</span>}
+            </button>
           </div>
         </nav>
 
@@ -160,22 +174,6 @@ export default function StaffSidebar({
             {unreadAlertCount > 0 && !isCollapsed && (
               <span className="vt-dark-alert-badge">{unreadAlertCount}</span>
             )}
-          </button>
-
-          {/* Settings */}
-          <button
-            type="button"
-            className={`vt-dark-nav-item footer-item ${activeView === "settings" ? "active" : ""}`}
-            onClick={() => {
-              onSelectView("settings");
-              if (onCloseMobile) onCloseMobile();
-            }}
-            title="Workstation Settings"
-          >
-            <span className="vt-dark-nav-icon">
-              <Settings size={18} />
-            </span>
-            {!isCollapsed && <span className="vt-dark-nav-label">Settings</span>}
           </button>
 
           {/* Current Staff Profile Card */}

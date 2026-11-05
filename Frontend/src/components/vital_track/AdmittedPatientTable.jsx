@@ -7,6 +7,7 @@ import {
   Thermometer,
   ChevronRight,
   User,
+  ArrowRightLeft,
 } from "lucide-react";
 import MewsChip from "../ui/MewsChip";
 
@@ -15,6 +16,7 @@ export default function AdmittedPatientTable({
   loading = false,
   onOpenProfile,
   onOpenCaseDetails, // view case action
+  onTransfer, // transfer action directly in table
   onSwitchToBedMap,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -221,6 +223,11 @@ export default function AdmittedPatientTable({
                               <span className="opd-patient-id-tag">
                                 {pat.patient_id ? pat.patient_id.substring(0, 10) : "INP-PAT"}
                               </span>
+                              {pat.is_demo && (
+                                <span style={{ fontSize: "10px", background: "rgba(18, 59, 51, 0.1)", color: "#16391C", fontWeight: 700, padding: "1px 5px", borderRadius: "4px" }}>
+                                  DEMO
+                                </span>
+                              )}
                               {pat.bed_number && (
                                 <span style={{ fontSize: "11px", color: "var(--vt-primary-green)", fontWeight: 600 }}>
                                   🛏️ Bed {pat.bed_number}
@@ -314,9 +321,23 @@ export default function AdmittedPatientTable({
                         </span>
                       </td>
 
-                      {/* 6. ACTION (View Details button strictly opening Unified Patient Profile, plus View Case) */}
+                      {/* 6. ACTION (View Details button strictly opening Unified Patient Profile, Transfer, plus View Case) */}
                       <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "right" }}>
                         <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                          {/* Transfer action directly accessible in table */}
+                          {onTransfer && (
+                            <button
+                              type="button"
+                              className="opd-action-btn secondary"
+                              onClick={() => onTransfer(pat)}
+                              title={pat.is_demo ? "Demo: Simulate inter-hospital transfer" : "Initiate inter-hospital or ward transfer"}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                            >
+                              <ArrowRightLeft size={12} />
+                              <span>Transfer</span>
+                            </button>
+                          )}
+
                           {/* View Case button allowed as requested */}
                           {pat.session_id && onOpenCaseDetails && (
                             <button

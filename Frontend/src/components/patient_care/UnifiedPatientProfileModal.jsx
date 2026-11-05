@@ -8,6 +8,11 @@ import ECGTelemetryModal from "./ECGTelemetryModal";
 import CarePlansModal from "./CarePlansModal";
 import BedManagementModal from "./BedManagementModal";
 import VitalsOverviewSection from "../vital_track/VitalsOverviewSection";
+import {
+  isDemoPatientId,
+  getDemoPatientUnifiedProfile,
+  updateDemoPatient,
+} from "../vital_track/demoPatientsData";
 
 export default function UnifiedPatientProfileModal({
   apiBase,
@@ -33,6 +38,7 @@ export default function UnifiedPatientProfileModal({
   const [ecgHR, setEcgHR] = useState(76);
   const [ecgQuality, setEcgQuality] = useState("Optimal (98%)");
   const [ecgArrhythmia, setEcgArrhythmia] = useState(false);
+  const [lastEcgTime, setLastEcgTime] = useState(null);
   const canvasRef = useRef(null);
   const windowRef = useRef(null);
   const hasAnimatedRef = useRef(false);
@@ -54,6 +60,19 @@ export default function UnifiedPatientProfileModal({
     setError("");
 
     try {
+      if (isDemoPatientId(patientId)) {
+        const demoData = getDemoPatientUnifiedProfile(patientId);
+        if (!demoData) {
+          throw new Error(`Demo patient profile for '${patientId}' could not be located.`);
+        }
+        setProfileData(demoData);
+        if (demoData.conversations && demoData.conversations.length > 0) {
+          setSelectedSessionId((prev) => prev || demoData.conversations[0].session_id);
+        }
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(`${apiBase}/staff/patient-care/patients/${patientId}/unified-profile`);
       const data = await res.json();
       if (!res.ok) {
@@ -106,6 +125,13 @@ export default function UnifiedPatientProfileModal({
   const timeline = profileData?.timeline || [];
 
   const activeBed = bedInfo.active_bed;
+  const isAdmitted = Boolean(
+    activeBed?.bed_number ||
+    patient.assigned_bed ||
+    patient.bed_number ||
+    patient.is_admitted ||
+    profileData?.admission_status === "admitted"
+  );
   const hasIntakeRf = clinicalStatus.has_intake_red_flag;
   const hasMewsAlert = clinicalStatus.has_mews_alert;
   const currentMews = latestVitals?.mews_score ?? clinicalStatus.mews_score ?? 0;
@@ -376,6 +402,7 @@ export default function UnifiedPatientProfileModal({
     setEcgHR(latestVitals?.heart_rate || 76);
     setEcgQuality("Optimal (98%)");
     setEcgArrhythmia((latestVitals?.heart_rate || 76) > 115 || (latestVitals?.heart_rate || 76) < 50);
+    setLastEcgTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
   };
 
   const handleDisconnectECG = async () => {
@@ -383,6 +410,7 @@ export default function UnifiedPatientProfileModal({
       await fetch(`${apiBase}/staff/patient-care/ecg/disconnect`, { method: "POST" });
     } catch {}
     setEcgConnected(false);
+    setLastEcgTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
   };
 
   // Discharge patient handler
@@ -394,6 +422,20 @@ export default function UnifiedPatientProfileModal({
     setActionMsg({ type: "", text: "" });
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        updateDemoPatient(patient.patient_id, {
+          is_admitted: false,
+          admission_status: "discharged",
+          bed_status: "vacated",
+          bed_number: null,
+          discharge_ready: true,
+        });
+        setActionMsg({ type: "success", text: "Demo patient successfully discharged and bed vacated." });
+        await fetchProfile();
+        if (onActionTrigger) onActionTrigger("discharged", patient);
+        return;
+      }
+
       const hospId = currentStaff?.hospital_id || "hosp-medikiosk";
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/discharge?hospital_id=${hospId}`,
@@ -422,6 +464,19 @@ export default function UnifiedPatientProfileModal({
     setActionMsg({ type: "", text: "" });
 
     try {
+      if (isDemoPatientId(patient.patient_id)) {
+        updateDemoPatient(patient.patient_id, {
+          bed_number: "ICU-205",
+          bed_type: "ICU",
+          ward: "Intensive Care Unit",
+          needs_icu: true,
+        });
+        setActionMsg({ type: "success", text: "Demo patient upgraded to ICU bed ICU-205." });
+        await fetchProfile();
+        if (onActionTrigger) onActionTrigger("icu_upgraded", patient);
+        return;
+      }
+
       const hospId = currentStaff?.hospital_id || "hosp-medikiosk";
       const res = await fetch(
         `${apiBase}/staff/patient-care/patients/${patient.patient_id}/upgrade-icu?hospital_id=${hospId}`,
@@ -1000,30 +1055,39 @@ export default function UnifiedPatientProfileModal({
                           </div>
                         </button>
 
-                        {/* ANATOMICAL HUMAN BODY SVG (Medical Illustration) */}
-                        <div className="upm-body-svg-wrap">
-                          <svg viewBox="0 0 320 460" role="img" aria-label="Human anatomical muscular body figure">
+                        {/* 3D ANATOMICAL HUMAN BODY (Muscular and Skeletal Medical Model) */}
+                        <div className="upm-body-svg-wrap" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <img
+                            src="/anatomical_human_model.png"
+                            alt="3D Anatomical Human Muscular and Skeletal Model"
+                            className="upm-anatomical-img"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              maxHeight: "430px",
+                              objectFit: "contain",
+                              position: "relative",
+                              zIndex: 1,
+                              filter: "drop-shadow(0 14px 28px rgba(18, 59, 51, 0.18))",
+                              display: "block",
+                            }}
+                          />
+
+                          {/* INTERACTIVE CLINICAL PINPOINTS & CLICKABLE ANATOMICAL REGIONS */}
+                          <svg
+                            viewBox="0 0 320 460"
+                            role="img"
+                            aria-label="Interactive Anatomical Pinpoints"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                              pointerEvents: "auto",
+                              zIndex: 3,
+                            }}
+                          >
                             <defs>
-                              <radialGradient id="upm-muscle-body" cx="50%" cy="35%" r="65%">
-                                <stop offset="0%" stopColor="#e76a52" />
-                                <stop offset="35%" stopColor="#c33d28" />
-                                <stop offset="70%" stopColor="#8d2315" />
-                                <stop offset="100%" stopColor="#48120a" />
-                              </radialGradient>
-                              <radialGradient id="upm-head-grad" cx="50%" cy="30%" r="50%">
-                                <stop offset="0%" stopColor="#f38973" />
-                                <stop offset="55%" stopColor="#c84430" />
-                                <stop offset="100%" stopColor="#761b0f" />
-                              </radialGradient>
-                              <linearGradient id="upm-pec-grad" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stopColor="#ef7a64" />
-                                <stop offset="60%" stopColor="#b43420" />
-                                <stop offset="100%" stopColor="#67160c" />
-                              </linearGradient>
-                              <linearGradient id="upm-tendon" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#fce7df" stopOpacity="0.85" />
-                                <stop offset="100%" stopColor="#e5a995" stopOpacity="0.4" />
-                              </linearGradient>
                               <filter id="upm-glow">
                                 <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
                                 <feMerge>
@@ -1033,141 +1097,61 @@ export default function UnifiedPatientProfileModal({
                               </filter>
                             </defs>
 
-                            {/* HEAD / CRANIUM */}
-                            <path
-                              d="M160 18 C145 18 138 32 138 48 C138 68 146 82 153 90 C155 93 158 95 160 95 C162 95 165 93 167 90 C174 82 182 68 182 48 C182 32 175 18 160 18 Z"
-                              fill="url(#upm-head-grad)"
-                              stroke="#67160c"
-                              strokeWidth="1.2"
-                            />
-                            {/* Sternocleidomastoid Neck */}
-                            <path d="M152 88 L146 112 L154 114 L158 92 Z M168 88 L174 112 L166 114 L162 92 Z" fill="#992617" />
+                            {/* 1. Cardiac / Heart Point - Clickable to inspect Cardiac Telemetry */}
+                            <g
+                              style={{ cursor: "pointer" }}
+                              onClick={() => {
+                                setActiveTab("vitals");
+                                const organCard = windowRef.current?.querySelector(".upm-organ-card");
+                                if (organCard) organCard.scrollIntoView({ behavior: "smooth", block: "center" });
+                              }}
+                              title="Cardiac: Click to inspect Bedside Heart Rate & Cardiac Telemetry"
+                            >
+                              <circle cx="172" cy="144" r="14" fill="#dc2626" opacity="0.18" className="upm-beat" />
+                              <circle cx="172" cy="144" r="6" fill="#ffffff" stroke="#dc2626" strokeWidth="2.2" filter="url(#upm-glow)" />
+                              <circle cx="172" cy="144" r="2.8" fill="#dc2626" />
+                            </g>
 
-                            {/* DELTOIDS (SHOULDERS) */}
-                            <path
-                              d="M142 110 C128 112 112 120 102 132 C96 140 94 150 96 162 C102 166 114 162 118 152 C122 142 126 128 140 120 Z"
-                              fill="url(#upm-pec-grad)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <path
-                              d="M178 110 C192 112 208 120 218 132 C224 140 226 150 224 162 C218 166 206 162 202 152 C198 142 194 128 180 120 Z"
-                              fill="url(#upm-pec-grad)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
+                            {/* 2. Pulmonary / Lung Point - Clickable to inspect SpO2 / RR */}
+                            <g
+                              style={{ cursor: "pointer" }}
+                              onClick={() => setActiveTab("vitals")}
+                              title="Pulmonary: Oxygen Saturation and Respiratory Rate"
+                            >
+                              <circle cx="144" cy="142" r="12" fill="#1f5c50" opacity="0.15" />
+                              <circle cx="144" cy="142" r="5.5" fill="#ffffff" stroke="#1f5c50" strokeWidth="2" filter="url(#upm-glow)" />
+                              <circle cx="144" cy="142" r="2.4" fill="#1f5c50" />
+                            </g>
 
-                            {/* CLAVICLES (TENDON HIGHLIGHT) */}
-                            <path d="M140 114 Q150 118 160 115 Q170 118 180 114" fill="none" stroke="url(#upm-tendon)" strokeWidth="2.5" strokeLinecap="round" />
+                            {/* 3. Brachial / Arm (BP) Point - Clickable */}
+                            <g
+                              style={{ cursor: "pointer" }}
+                              onClick={() => setActiveTab("vitals")}
+                              title="Brachial: Arterial Blood Pressure"
+                            >
+                              <circle cx="104" cy="195" r="5.5" fill="#ffffff" stroke="#0284c7" strokeWidth="2" filter="url(#upm-glow)" />
+                              <circle cx="104" cy="195" r="2.4" fill="#0284c7" />
+                            </g>
 
-                            {/* PECTORALIS MAJOR (CHEST) */}
-                            <path
-                              d="M160 116 C148 117 132 124 124 135 C120 148 122 165 136 172 C146 176 156 172 160 166 Z"
-                              fill="url(#upm-pec-grad)"
-                              stroke="#761b0f"
-                              strokeWidth="1.2"
-                            />
-                            <path
-                              d="M160 116 C172 117 188 124 196 135 C200 148 198 165 184 172 C174 176 164 172 160 166 Z"
-                              fill="url(#upm-pec-grad)"
-                              stroke="#761b0f"
-                              strokeWidth="1.2"
-                            />
-                            <line x1="160" y1="116" x2="160" y2="180" stroke="url(#upm-tendon)" strokeWidth="1.8" />
+                            {/* 4. Core / Umbilical (MEWS) Point - Clickable */}
+                            <g
+                              style={{ cursor: "pointer" }}
+                              onClick={() => setActiveTab("mews")}
+                              title="Core: Subbe MEWS Early Warning Deterioration Score"
+                            >
+                              <circle cx="160" cy="222" r="6.5" fill="#ffffff" stroke="#d97706" strokeWidth="2.2" filter="url(#upm-glow)" />
+                              <circle cx="160" cy="222" r="2.8" fill="#d97706" />
+                            </g>
 
-                            {/* SERRATUS ANTERIOR & RIBS */}
-                            <path d="M124 165 C122 172 120 182 125 190 C128 196 132 198 136 198 C132 188 130 178 132 168 Z" fill="#992617" />
-                            <path d="M196 165 C198 172 200 182 195 190 C192 196 188 198 184 198 C188 188 190 178 188 168 Z" fill="#992617" />
-
-                            {/* RECTUS ABDOMINIS (6-PACK SEGMENTS) */}
-                            <rect x="142" y="174" width="16" height="15" rx="3" fill="#c33d28" stroke="#67160c" strokeWidth="0.8" />
-                            <rect x="162" y="174" width="16" height="15" rx="3" fill="#c33d28" stroke="#67160c" strokeWidth="0.8" />
-                            <rect x="141" y="193" width="17" height="16" rx="3" fill="#b43420" stroke="#67160c" strokeWidth="0.8" />
-                            <rect x="162" y="193" width="17" height="16" rx="3" fill="#b43420" stroke="#67160c" strokeWidth="0.8" />
-                            <rect x="142" y="213" width="16" height="18" rx="3" fill="#9e2a1b" stroke="#67160c" strokeWidth="0.8" />
-                            <rect x="162" y="213" width="16" height="18" rx="3" fill="#9e2a1b" stroke="#67160c" strokeWidth="0.8" />
-                            <line x1="160" y1="172" x2="160" y2="242" stroke="url(#upm-tendon)" strokeWidth="1.5" />
-
-                            {/* EXTERNAL OBLIQUES (FLANKS) */}
-                            <path d="M136 185 C130 195 128 212 132 230 C136 238 142 242 146 242 L144 210 Z" fill="#9e2a1b" />
-                            <path d="M184 185 C190 195 192 212 188 230 C184 238 178 242 174 242 L176 210 Z" fill="#9e2a1b" />
-
-                            {/* ARMS: BICEPS, FOREARMS, HANDS */}
-                            <path
-                              d="M98 158 C94 172 92 195 96 215 C100 220 106 218 108 210 C112 195 114 175 112 160 Z"
-                              fill="url(#upm-muscle-body)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <path
-                              d="M96 215 C92 235 88 260 86 280 C90 285 96 284 98 275 C102 258 106 235 106 218 Z"
-                              fill="url(#upm-muscle-body)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <path d="M86 280 C84 290 82 300 84 308 C86 312 90 310 92 304 C94 295 96 285 96 278 Z" fill="#b43420" />
-
-                            <path
-                              d="M222 158 C226 172 228 195 224 215 C220 220 214 218 212 210 C208 195 206 175 208 160 Z"
-                              fill="url(#upm-muscle-body)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <path
-                              d="M224 215 C228 235 232 260 234 280 C230 285 224 284 222 275 C218 258 214 235 214 218 Z"
-                              fill="url(#upm-muscle-body)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <path d="M234 280 C236 290 238 300 236 308 C234 312 230 310 228 304 C226 295 224 285 224 278 Z" fill="#b43420" />
-
-                            {/* PELVIS / GROIN */}
-                            <path d="M140 238 Q160 252 180 238 L178 268 L160 280 L142 268 Z" fill="#7a1f14" stroke="#48120a" strokeWidth="1" />
-
-                            {/* LEGS: THIGHS, KNEES, CALVES */}
-                            <path
-                              d="M142 268 C136 285 130 320 132 355 C136 364 146 365 152 358 C158 335 160 295 158 276 Z"
-                              fill="url(#upm-muscle-body)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <path
-                              d="M178 268 C184 285 190 320 188 355 C184 364 174 365 168 358 C162 335 160 295 162 276 Z"
-                              fill="url(#upm-muscle-body)"
-                              stroke="#67160c"
-                              strokeWidth="1"
-                            />
-                            <ellipse cx="142" cy="365" rx="7" ry="6" fill="#e5a995" />
-                            <ellipse cx="178" cy="365" rx="7" ry="6" fill="#e5a995" />
-                            <path d="M136 372 C132 390 134 420 136 445 L144 445 C146 425 148 395 148 372 Z" fill="#9e2a1b" stroke="#67160c" strokeWidth="1" />
-                            <path d="M134 445 L130 455 L146 455 L145 445 Z" fill="#7a1f14" />
-                            <path d="M184 372 C188 390 186 420 184 445 L176 445 C174 425 172 395 172 372 Z" fill="#9e2a1b" stroke="#67160c" strokeWidth="1" />
-                            <path d="M186 445 L190 455 L174 455 L175 445 Z" fill="#7a1f14" />
-
-                            {/* FIBER STRIATIONS */}
-                            <path d="M126 138 Q138 145 152 140 M194 138 Q182 145 168 140" fill="none" stroke="#fca595" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
-                            <path d="M128 152 Q140 158 154 154 M192 152 Q180 158 166 154" fill="none" stroke="#fca595" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
-
-                            {/* PINPOINT NODES WITH GLOW */}
-                            {/* 1. Cardiac / Heart Point */}
-                            <circle cx="174" cy="148" r="5" fill="#ffffff" stroke="#dc2626" strokeWidth="2" filter="url(#upm-glow)" />
-                            <circle cx="174" cy="148" r="2.2" fill="#dc2626" />
-
-                            {/* 2. Pulmonary / Lung Point */}
-                            <circle cx="146" cy="148" r="5" fill="#ffffff" stroke="#1f5c50" strokeWidth="2" filter="url(#upm-glow)" />
-                            <circle cx="146" cy="148" r="2.2" fill="#1f5c50" />
-
-                            {/* 3. Brachial / Arm (BP) Point */}
-                            <circle cx="104" cy="200" r="5" fill="#ffffff" stroke="#0284c7" strokeWidth="2" filter="url(#upm-glow)" />
-                            <circle cx="104" cy="200" r="2.2" fill="#0284c7" />
-
-                            {/* 4. Core / Umbilical (MEWS) Point */}
-                            <circle cx="160" cy="228" r="5" fill="#ffffff" stroke="#d97706" strokeWidth="2" filter="url(#upm-glow)" />
-                            <circle cx="160" cy="228" r="2.2" fill="#d97706" />
-
-                            {/* 5. Cranial / Temp Point */}
-                            <circle cx="160" cy="50" r="4.5" fill="#ffffff" stroke="#64748b" strokeWidth="2" />
-                            <circle cx="160" cy="50" r="2" fill="#64748b" />
+                            {/* 5. Cranial / Temperature Point */}
+                            <g
+                              style={{ cursor: "pointer" }}
+                              onClick={() => setActiveTab("vitals")}
+                              title="Cranial: Core Body Temperature"
+                            >
+                              <circle cx="160" cy="46" r="5" fill="#ffffff" stroke="#64748b" strokeWidth="2" />
+                              <circle cx="160" cy="46" r="2.2" fill="#64748b" />
+                            </g>
                           </svg>
                         </div>
                       </div>
@@ -1263,67 +1247,32 @@ export default function UnifiedPatientProfileModal({
                           </div>
                         </div>
 
-                        {/* The 3D Glowing Glass Heart Organ Illustration */}
-                        <div className="upm-organ-heart-box" title="3D Cardiac Telemetry Organ">
-                          <svg viewBox="0 0 300 340" role="img" aria-label="3D Anatomical Heart">
-                            <defs>
-                              <radialGradient id="upm-organ-heart-body" cx="48%" cy="62%" r="62%">
-                                <stop offset="0" stopColor="#ffd27a" />
-                                <stop offset=".28" stopColor="#ff7a3a" />
-                                <stop offset=".6" stopColor="#b3283a" />
-                                <stop offset="1" stopColor="#3b2745" />
-                              </radialGradient>
-                              <linearGradient id="upm-organ-heart-glass" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0" stopColor="#cfd3e6" stopOpacity=".85" />
-                                <stop offset="1" stopColor="#4a3c5c" stopOpacity=".9" />
-                              </linearGradient>
-                              <filter id="upm-organ-blur">
-                                <feGaussianBlur stdDeviation="4" />
-                              </filter>
-                            </defs>
-                            <g
-                              className="upm-beat"
-                              style={{ transformOrigin: "150px 220px", transformBox: "view-box" }}
-                            >
-                              <path
-                                d="M92 70 L40 62 L36 84 L92 98Z M170 78 L250 70 L254 98 L180 108Z"
-                                fill="url(#upm-organ-heart-glass)"
-                                stroke="#8a8fa8"
-                                strokeWidth="2"
-                              />
-                              <path
-                                d="M150 330 C60 272 18 205 38 136 C54 82 112 72 140 112 C150 124 160 124 170 112 C202 72 258 88 266 142 C280 212 240 276 150 330Z"
-                                fill="url(#upm-organ-heart-body)"
-                                stroke="#7a6a92"
-                                strokeWidth="3"
-                              />
-                              <path
-                                d="M60 150 C70 100 112 90 130 125 C100 150 80 200 90 250 C60 220 48 185 60 150Z"
-                                fill="url(#upm-organ-heart-glass)"
-                                opacity=".55"
-                              />
-                              <g fill="none" stroke="#ffc46a" strokeLinecap="round" filter="url(#upm-organ-blur)" opacity=".9">
-                                <path d="M150 300 C140 240 120 200 110 140" strokeWidth="7" />
-                                <path d="M150 290 C170 240 200 210 220 150" strokeWidth="6" />
-                                <path d="M120 220 C150 200 170 210 190 190" strokeWidth="5" />
-                              </g>
-                              <g fill="none" stroke="#ffe9a8" strokeLinecap="round" strokeWidth="1.6" opacity=".85">
-                                <path d="M150 300 C140 240 120 200 110 140" />
-                                <path d="M150 290 C170 240 200 210 220 150" />
-                                <path d="M120 220 C150 200 170 210 190 190" />
-                              </g>
-                              <ellipse
-                                className="upm-core"
-                                cx="146"
-                                cy="226"
-                                rx="46"
-                                ry="52"
-                                fill="#ffd48a"
-                                opacity=".45"
-                                filter="url(#upm-organ-blur)"
-                              />
-                            </g>
-                          </svg>
+                        {/* Detailed 3D Anatomical Human Heart Illustration */}
+                        <div
+                          className="upm-organ-heart-box"
+                          title="Detailed 3D Anatomical Heart (Click to view Vitals & ECG)"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => {
+                            setActiveTab("vitals");
+                            const ecgSec = windowRef.current?.querySelector(".upm-ecg-workspace-card");
+                            if (ecgSec) ecgSec.scrollIntoView({ behavior: "smooth" });
+                          }}
+                        >
+                          <div className="upm-beat" style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <img
+                              src="/anatomical_heart.jpg"
+                              alt="Detailed 3D Anatomical Human Heart"
+                              className="upm-organ-heart-img"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                                borderRadius: "14px",
+                                filter: "drop-shadow(0 6px 18px rgba(179, 40, 58, 0.28))",
+                                transition: "transform 0.18s ease",
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
                     </section>
@@ -1488,38 +1437,126 @@ export default function UnifiedPatientProfileModal({
                       </div>
                     </section>
 
-                    {/* REAL-TIME ECG SIMULATION */}
-                    <section className="upm-card">
-                      <div className="upm-card-head">
-                        <h3 className="upm-card-title">
-                          <span>❤️</span> AD8232 ECG Telemetry
-                        </h3>
-                        <div style={{ display: "flex", gap: "6px" }}>
+                    {/* REAL-TIME ECG / CARDIAC TELEMETRY WORKSPACE */}
+                    <section className="upm-card upm-ecg-workspace-card" style={{ borderLeft: ecgConnected ? "4px solid #10b981" : "4px solid #94a3b8" }}>
+                      <div className="upm-card-head" style={{ marginBottom: "6px" }}>
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <h3 className="upm-card-title" style={{ margin: 0 }}>
+                              <span>🫀</span> ECG / Cardiac Telemetry
+                            </h3>
+                            <span
+                              className="upm-chip"
+                              style={{
+                                background: ecgConnected ? "rgba(16, 185, 129, 0.14)" : "rgba(148, 163, 184, 0.15)",
+                                color: ecgConnected ? "#047857" : "#475569",
+                                fontWeight: 600,
+                                fontSize: "10.5px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  background: ecgConnected ? "#10b981" : "#94a3b8",
+                                }}
+                              />
+                              {ecgConnected ? "CONNECTED" : "DISCONNECTED"}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: "11px", color: "var(--ink-soft)" }}>
+                            AD8232 Single-Lead Sensor • 250 Hz Cardiac Stream
+                            {lastEcgTime && ` • Last updated: ${lastEcgTime}`}
+                          </span>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                           <button
                             type="button"
                             className="upm-btn-mini"
-                            onClick={ecgConnected ? handleDisconnectECG : handleConnectECG}
-                            style={{
-                              background: ecgConnected ? "var(--alert-soft)" : "var(--ok-soft)",
-                              borderColor: ecgConnected ? "#fca5a5" : "#bce1ca",
-                              color: ecgConnected ? "var(--alert)" : "var(--ok)",
-                            }}
+                            onClick={() => setActiveSubModal("ecg")}
+                            title="Open Fullscreen Telemetry Oscilloscope"
+                            style={{ background: "#ffffff", borderColor: "var(--line)" }}
                           >
-                            {ecgConnected ? "⏹️ Stop" : "🔌 Connect"}
+                            Expand ↗
                           </button>
+
+                          {isAdmitted ? (
+                            <button
+                              type="button"
+                              className="upm-btn-mini"
+                              onClick={ecgConnected ? handleDisconnectECG : handleConnectECG}
+                              style={{
+                                background: ecgConnected ? "var(--alert-soft)" : "var(--ok-soft)",
+                                borderColor: ecgConnected ? "#fca5a5" : "#bce1ca",
+                                color: ecgConnected ? "var(--alert)" : "var(--ok)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {ecgConnected ? "⏹️ Stop Stream" : "🔌 Start Monitoring"}
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: "10.5px", color: "var(--ink-soft)", fontStyle: "italic" }}>
+                              Admission Req.
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      <div style={{ borderRadius: "12px", overflow: "hidden", background: "#051610", lineHeight: 0 }}>
-                        <canvas ref={canvasRef} width="600" height="90" style={{ width: "100%", height: "90px", display: "block" }} />
-                      </div>
-
-                      <div className="disclaimer-banner disclaimer-ecg" style={{ margin: 0, padding: "8px 12px", fontSize: "11px" }}>
-                        <span className="disclaimer-icon">ℹ️</span>
-                        <div>
-                          <strong>Rule 11 Simulation Notice:</strong> AD8232 ECG waveform is synthetically simulated for demonstration and educational testing.
+                      {!isAdmitted ? (
+                        <div
+                          style={{
+                            padding: "16px",
+                            background: "#f8fafc",
+                            borderRadius: "12px",
+                            border: "1px dashed #cbd5e1",
+                            textAlign: "center",
+                          }}
+                        >
+                          <span style={{ fontSize: "20px" }}>🏥</span>
+                          <h4 style={{ margin: "4px 0 2px", fontSize: "13px", color: "#334155" }}>
+                            OPD Outpatient Record (Not Admitted)
+                          </h4>
+                          <p style={{ margin: 0, fontSize: "11.5px", color: "#64748b" }}>
+                            Continuous bedside physiological telemetry and MEWS monitoring are reserved for admitted ward inpatients.
+                          </p>
                         </div>
-                      </div>
+                      ) : (
+                        <>
+                          <div style={{ borderRadius: "12px", overflow: "hidden", background: "#051610", lineHeight: 0, position: "relative" }}>
+                            <canvas ref={canvasRef} width="600" height="90" style={{ width: "100%", height: "90px", display: "block" }} />
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "8px",
+                                right: "12px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                zIndex: 2,
+                              }}
+                            >
+                              <span style={{ fontSize: "11px", color: ecgArrhythmia ? "#ef4444" : "#10b981", fontWeight: 600 }}>
+                                {ecgConnected ? `${ecgHR} bpm • ${ecgArrhythmia ? "Arrhythmia Alert" : "Normal Sinus"}` : "Standby Mode"}
+                              </span>
+                              <span style={{ fontSize: "10px", background: "rgba(0,0,0,0.5)", color: "#94a3b8", padding: "2px 6px", borderRadius: "4px" }}>
+                                DEMO
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="disclaimer-banner disclaimer-ecg" style={{ margin: 0, padding: "8px 12px", fontSize: "11px" }}>
+                            <span className="disclaimer-icon">ℹ️</span>
+                            <div>
+                              <strong>Rule 11 Simulation Notice:</strong> AD8232 ECG waveform is synthetically simulated for demonstration and educational testing.
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </section>
                   </div>
                 </div>

@@ -117,8 +117,21 @@ export default function LandingShowcase({ children }) {
                   <div className="lp-logo"><b>Medi</b>Kiosk</div>
                   <div className="lp-icons">
                     {ICONS.map((d, i) => (
-                      <div key={i} className={`lp-ico${i === 0 ? " on" : ""}`}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>
+                      <div key={i} className={`lp-ico${i === 1 ? " on" : ""}`} title={i === 1 ? "Cardiac Telemetry (Anatomical Heart)" : undefined}>
+                        {i === 1 ? (
+                          <img
+                            src="/anatomical_heart.jpg"
+                            alt="Cardiac Tab"
+                            style={{
+                              width: "2.3cqw",
+                              height: "2.3cqw",
+                              objectFit: "contain",
+                              borderRadius: "0.4cqw",
+                            }}
+                          />
+                        ) : (
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -133,30 +146,19 @@ export default function LandingShowcase({ children }) {
 
                 <div className="lp-abs lp-glowbg" />
                 <div className="lp-abs lp-heart lp-a-heart">
-                  <svg viewBox="0 0 300 340" role="img" aria-label="Glowing glass heart">
-                    <defs>
-                      <radialGradient id="lp-body" cx="48%" cy="62%" r="62%">
-                        <stop offset="0" stopColor="#ffd27a" /><stop offset=".28" stopColor="#ff7a3a" /><stop offset=".6" stopColor="#b3283a" /><stop offset="1" stopColor="#3b2745" />
-                      </radialGradient>
-                      <linearGradient id="lp-glass" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0" stopColor="#cfd3e6" stopOpacity=".85" /><stop offset="1" stopColor="#4a3c5c" stopOpacity=".9" />
-                      </linearGradient>
-                      <filter id="lp-blur"><feGaussianBlur stdDeviation="5" /></filter>
-                    </defs>
-                    <g className="lp-beat" style={{ transformOrigin: "150px 220px", transformBox: "view-box" }}>
-                      <path d="M92 70 L40 62 L36 84 L92 98Z M170 78 L250 70 L254 98 L180 108Z" fill="url(#lp-glass)" stroke="#8a8fa8" strokeWidth="2" />
-                      <path d="M150 330 C60 272 18 205 38 136 C54 82 112 72 140 112 C150 124 160 124 170 112 C202 72 258 88 266 142 C280 212 240 276 150 330Z" fill="url(#lp-body)" stroke="#7a6a92" strokeWidth="3" />
-                      <path d="M60 150 C70 100 112 90 130 125 C100 150 80 200 90 250 C60 220 48 185 60 150Z" fill="url(#lp-glass)" opacity=".55" />
-                      <g fill="none" stroke="#ffc46a" strokeLinecap="round" filter="url(#lp-blur)" opacity=".9">
-                        <path d="M150 300 C140 240 120 200 110 140" strokeWidth="7" /><path d="M150 290 C170 240 200 210 220 150" strokeWidth="6" /><path d="M120 220 C150 200 170 210 190 190" strokeWidth="5" />
-                      </g>
-                      <g fill="none" stroke="#ffe9a8" strokeLinecap="round" strokeWidth="1.6" opacity=".85">
-                        <path d="M150 300 C140 240 120 200 110 140" /><path d="M150 290 C170 240 200 210 220 150" /><path d="M120 220 C150 200 170 210 190 190" /><path d="M132 260 C110 250 96 230 90 205" /><path d="M168 262 C195 250 212 232 222 208" /><path d="M140 180 C130 160 128 140 134 120" />
-                      </g>
-                      <ellipse className="lp-core" cx="146" cy="226" rx="46" ry="52" fill="#ffd48a" opacity=".45" filter="url(#lp-blur)" />
-                      <path d="M60 130 C74 96 110 90 126 112" fill="none" stroke="#fff" strokeOpacity=".6" strokeWidth="3" strokeLinecap="round" />
-                    </g>
-                  </svg>
+                  <div className="lp-beat" style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <img
+                      src="/anatomical_heart.jpg"
+                      alt="Detailed 3D Anatomical Human Heart"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        borderRadius: "2.4cqw",
+                        filter: "drop-shadow(0 1.2cqw 3cqw rgba(179, 40, 58, 0.35))",
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <svg className="lp-abs lp-link" viewBox="0 0 100 70" preserveAspectRatio="none" aria-hidden="true">

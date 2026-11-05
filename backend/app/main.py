@@ -61,18 +61,22 @@ from database import (
 
 
 # =========================
-# ENVIRONMENT SETUP
+# ENVIRONMENT & AI CLIENT SETUP
 # =========================
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-client = Groq(
-    api_key=GROQ_API_KEY or "gsk_placeholder_for_local_dev"
+from app.services.clinical_intelligence import (
+    get_groq_client,
+    run_clinical_intake_interview,
+    generate_deterministic_clinical_summary,
+    generate_deterministic_nine_section_report,
+    extract_clinical_variables,
+    DEFAULT_GROQ_MODEL,
+    FALLBACK_GROQ_MODEL,
 )
 
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
 
 
 # =========================
@@ -159,68 +163,12 @@ def get_default_error_message(language):
 
 def mock_clinical_intake_response(user_message: str, previous_messages: list, language: str = "en") -> tuple[str, str]:
     """
-    Intelligent local clinical intake fallback engine.
-    Ensures the MediKiosk conversational triage continues smoothly even if
-    external Groq cloud credentials are not supplied or rate-limited.
-    Returns (status, reply).
+    Intelligent clinical intake triage engine.
+    Analyzes patient complaints, tracks 4 information states (confirmed positive,
+    explicitly denied, not asked, asked unanswered), detects emergency red flags,
+    and asks complaint-specific clinical follow-up questions.
     """
-    msg_lower = (user_message or "").lower()
-
-    # 1. Red Flag Detection (Acute Life-Threatening Clinical Indicators)
-    red_flag_triggers = [
-        "chest pain", "crushing", "heart attack", "cannot breathe", "can't breathe",
-        "shortness of breath", "short of breath", "difficulty breathing", "syncope",
-        "passed out", "fainted", "unconscious", "stroke", "slurred speech",
-        "loss of vision", "coughing blood", "vomiting blood", "severe head injury",
-        "anaphylaxis", "severe allergic", "suicidal"
-    ]
-    if any(trigger in msg_lower for trigger in red_flag_triggers):
-        if language == "hi":
-            reply = "⚠️ आपातकालीन चेतावनी: आपके लक्षण एक गंभीर स्थिति का संकेत दे सकते हैं। कृपया तुरंत आपातकालीन कक्ष (ER) या ट्राइएज नर्स से संपर्क करें!"
-        elif language == "mr":
-            reply = "⚠️ आणीबाणी इशारा: तुमची लक्षणे गंभीर स्थिती दर्शवू शकतात. कृपया त्वरित आपत्कालीन कक्षाशी संपर्क साधा!"
-        else:
-            reply = "⚠️ URGENT CLINICAL ALERT: The symptoms you described may indicate a potentially serious emergency. Please immediately notify the triage nurse or proceed directly to the Emergency Room."
-        return "red_flag", reply
-
-    # Count patient turns in this session
-    user_turns = sum(1 for m in previous_messages if (m.get("sender") == "user" or (isinstance(m, dict) and m.get("role") == "user"))) + 1
-
-    if user_turns == 1:
-        if language == "hi":
-            reply = "नमस्ते। क्या आप बता सकते हैं कि ये लक्षण कब से शुरू हुए हैं और 1 से 10 के पैमाने पर दर्द या परेशानी कितनी है?"
-        elif language == "mr":
-            reply = "नमस्कार. ही लक्षणे कधीपासून सुरू झाली आहेत आणि त्रास किती प्रमाणात (१ ते १०) होत आहे?"
-        else:
-            reply = "Thank you for letting me know. Approximately when did these symptoms begin, and how would you rate your discomfort on a scale of 1 to 10?"
-        return "continue", reply
-
-    elif user_turns == 2:
-        if language == "hi":
-            reply = "समझ गया। क्या आपको इसके साथ कोई अन्य लक्षण जैसे बुखार, चक्कर, उल्टी या कमज़ोरी महसूस हो रही है?"
-        elif language == "mr":
-            reply = "समजले. यासोबत ताप, चक्कर येणे किंवा मळमळ यांसारखी इतर लक्षणे जाणवत आहेत का?"
-        else:
-            reply = "Understood. Are you experiencing any associated symptoms, such as fever, nausea, dizziness, or localized swelling?"
-        return "continue", reply
-
-    elif user_turns == 3:
-        if language == "hi":
-            reply = "धन्यवाद। क्या आपको पहले से कोई बीमारी (जैसे बीपी, शुगर, अस्थमा) है या किसी दवा से एलर्जी है?"
-        elif language == "mr":
-            reply = "धन्यवाद. आपल्याला आधीपासून काही आजार (जसे बीपी, मधुमेह) किंवा औषधांची ॲलर्जी आहे का?"
-        else:
-            reply = "Noted. Do you have any known medical conditions (such as diabetes, hypertension, asthma) or allergies to any medications?"
-        return "continue", reply
-
-    else:
-        if language == "hi":
-            reply = "बहुत-बहुत धन्यवाद। मैंने आपकी सभी जानकारी डॉक्टर के लिए दर्ज कर ली है। कृपया अब डॉक्टर परामर्श कक्ष में जाएं।"
-        elif language == "mr":
-            reply = "खूप धन्यवाद. मी डॉक्टरांसाठी तुमची सर्व माहिती नोंदवून घेतली आहे. कृपया तपासणी कक्षात जा."
-        else:
-            reply = "Thank you very much. I have documented your chief complaint, duration, severity, and clinical history for the physician. Your intake is complete—please proceed to the doctor consultation room."
-        return "completed", reply
+    return run_clinical_intake_interview(user_message, previous_messages, language)
 
 
 
@@ -750,151 +698,119 @@ red_flag
     ] + conversation_history
 
 
-    try:
+    client, groq_err = get_groq_client()
 
-        completion = client.chat.completions.create(
+    if client is not None:
+        try:
+            completion = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=conversation,
+                temperature=0.4,
+                max_tokens=300
+            )
 
-            model=GROQ_MODEL,
-
-            messages=conversation,
-
-            temperature=0.4,
-
-            max_tokens=300
-        )
-
-
-        ai_response = (
-            completion
-            .choices[0]
-            .message
-            .content
-            .strip()
-        )
-
-
-        interview_status = "continue"
-        ai_reply = ""
-
-
-        # =========================
-        # PARSE RESPONSE
-        # =========================
-
-        lines = ai_response.splitlines()
-
-        for index, line in enumerate(lines):
-
-            line = line.strip()
-
-            if line.startswith("STATUS:"):
-
-                interview_status = (
-                    line
-                    .replace("STATUS:", "")
-                    .strip()
-                    .lower()
-                )
-
-            elif line.startswith("REPLY:"):
-
-                ai_reply = (
-                    line
-                    .replace("REPLY:", "")
-                    .strip()
-                )
-
-                # Preserve additional reply lines
-                remaining_lines = lines[index + 1:]
-
-                if remaining_lines:
-
-                    additional_text = "\n".join(
-                        item.strip()
-                        for item in remaining_lines
-                        if item.strip()
-                    )
-
-                    if additional_text:
-
-                        ai_reply += (
-                            "\n" + additional_text
-                        )
-
-                break
-
-
-        # =========================
-        # VALIDATE STATUS
-        # =========================
-
-        if interview_status not in [
-            "continue",
-            "completed",
-            "red_flag"
-        ]:
+            ai_response = (
+                completion
+                .choices[0]
+                .message
+                .content
+                .strip()
+            )
 
             interview_status = "continue"
+            ai_reply = ""
 
+            # =========================
+            # PARSE RESPONSE
+            # =========================
+            lines = ai_response.splitlines()
+            for index, line in enumerate(lines):
+                line = line.strip()
+                if line.startswith("STATUS:"):
+                    interview_status = (
+                        line
+                        .replace("STATUS:", "")
+                        .strip()
+                        .lower()
+                    )
+                elif line.startswith("REPLY:"):
+                    ai_reply = (
+                        line
+                        .replace("REPLY:", "")
+                        .strip()
+                    )
+                    remaining_lines = lines[index + 1:]
+                    if remaining_lines:
+                        additional_text = "\n".join(
+                            item.strip()
+                            for item in remaining_lines
+                            if item.strip()
+                        )
+                        if additional_text:
+                            ai_reply += "\n" + additional_text
+                    break
 
-        # =========================
-        # EMPTY RESPONSE
-        # =========================
+            if interview_status not in ["continue", "completed", "red_flag"]:
+                interview_status = "continue"
 
-        if not ai_reply.strip():
+            if not ai_reply.strip():
+                ai_reply = get_default_error_message(request.language)
+                interview_status = "continue"
 
-            ai_reply = get_default_error_message(
+            save_message(request.session_id, "ai", ai_reply)
+
+            if interview_status == "red_flag":
+                set_session_red_flag(
+                    request.session_id,
+                    reason=ai_reply.split("\n")[0][:180] or "Urgent clinical condition detected by AI interview"
+                )
+
+            return {
+                "reply": ai_reply,
+                "message": ai_reply,
+                "interview_status": interview_status,
+                "status": interview_status,
+                "session_id": request.session_id,
+                "ai_engine": "groq",
+                "red_flag_alert": {"severity": "CRITICAL", "category": "TRIAGE_ALERT"} if interview_status == "red_flag" else None
+            }
+
+        except Exception as e:
+            print(f"[Groq AI Notice] API call failed: {e}. Engaging intelligent clinical decision engine.")
+            interview_status, ai_reply = run_clinical_intake_interview(
+                request.message,
+                previous_messages,
                 request.language
             )
 
-            interview_status = "continue"
+            save_message(request.session_id, "ai", ai_reply)
 
+            if interview_status == "red_flag":
+                set_session_red_flag(
+                    request.session_id,
+                    reason=ai_reply.split("\n")[0][:180] or "Urgent clinical condition detected by AI interview"
+                )
 
-        # =========================
-        # SAVE AI RESPONSE
-        # =========================
-
-        save_message(
-            request.session_id,
-            "ai",
-            ai_reply
-        )
-
-        # =========================
-        # PERSIST RED FLAG IN SQLITE
-        # =========================
-        if interview_status == "red_flag":
-            set_session_red_flag(
-                request.session_id,
-                reason=ai_reply.split("\n")[0][:180] or "Urgent clinical condition detected by AI interview"
-            )
-
-
-        return {
-            "reply": ai_reply,
-            "interview_status": interview_status,
-            "session_id": request.session_id
-        }
-
-
-    except Exception as e:
-
-        print(
-            "[Groq Note] Falling back to local clinical intake engine:",
-            e
-        )
-
-        interview_status, ai_reply = mock_clinical_intake_response(
+            return {
+                "reply": ai_reply,
+                "message": ai_reply,
+                "interview_status": interview_status,
+                "status": interview_status,
+                "session_id": request.session_id,
+                "ai_engine": "clinical_intelligence",
+                "groq_error": str(e),
+                "red_flag_alert": {"severity": "CRITICAL", "category": "TRIAGE_ALERT"} if interview_status == "red_flag" else None
+            }
+    else:
+        # Groq client not configured or key is placeholder
+        print(f"[Groq AI Notice] {groq_err}. Running intelligent clinical decision engine.")
+        interview_status, ai_reply = run_clinical_intake_interview(
             request.message,
             previous_messages,
             request.language
         )
 
-        save_message(
-            request.session_id,
-            "ai",
-            ai_reply
-        )
+        save_message(request.session_id, "ai", ai_reply)
 
         if interview_status == "red_flag":
             set_session_red_flag(
@@ -904,8 +820,13 @@ red_flag
 
         return {
             "reply": ai_reply,
+            "message": ai_reply,
             "interview_status": interview_status,
-            "session_id": request.session_id
+            "status": interview_status,
+            "session_id": request.session_id,
+            "ai_engine": "clinical_intelligence",
+            "groq_note": groq_err,
+            "red_flag_alert": {"severity": "CRITICAL", "category": "TRIAGE_ALERT"} if interview_status == "red_flag" else None
         }
 
 
@@ -1038,6 +959,14 @@ or nature of symptoms.
 • List associated symptoms
 • Include important denied symptoms if mentioned
 
+### Relevant history
+
+Summarize known medical history, medications, or allergies mentioned by the patient. If none, state none reported.
+
+### Missing information
+
+Mention clinical aspects that remain unclarified or were not reported.
+
 ### Interview status
 
 Short statement about information collected.
@@ -1047,70 +976,50 @@ PATIENT CONVERSATION:
 {conversation_text}
 """
 
+    client, groq_err = get_groq_client()
+    if client is not None:
+        try:
+            completion = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": summary_prompt
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=500
+            )
 
-    try:
+            summary = (
+                completion
+                .choices[0]
+                .message
+                .content
+                .strip()
+            )
 
-        completion = client.chat.completions.create(
+            return {
+                "session_id": session_id,
+                "summary": summary
+            }
 
-            model=GROQ_MODEL,
-
-            messages=[
-                {
-                    "role": "system",
-                    "content": summary_prompt
-                }
-            ],
-
-            temperature=0.2,
-
-            max_tokens=400
-        )
-
-        summary = (
-            completion
-            .choices[0]
-            .message
-            .content
-            .strip()
-        )
-
+        except Exception as e:
+            print(
+                "[Groq AI Note] Summary generation API failed, using intelligent clinical summary engine:",
+                e
+            )
+            summary = generate_deterministic_clinical_summary(session_id, messages)
+            return {
+                "session_id": session_id,
+                "summary": summary
+            }
+    else:
+        print(f"[Clinical Intelligence] Groq client not available ({groq_err}). Using intelligent clinical summary engine.")
+        summary = generate_deterministic_clinical_summary(session_id, messages)
         return {
             "session_id": session_id,
             "summary": summary
-        }
-
-    except Exception as e:
-
-        print(
-            "[Groq Note] Summary generation fallback:",
-            e
-        )
-
-        complaint = "Patient consultation intake"
-        for m in (messages or []):
-            if m.get("sender") == "user":
-                complaint = m.get("message", "")[:120]
-                break
-
-        fallback_summary = f"""### Primary complaint
-{complaint}
-
-### Context / Trigger
-Symptoms reported during triage self-registration.
-
-### Character
-Patient reports active symptoms requiring clinical evaluation.
-
-### Associated symptoms
-• Reviewed through structured clinical intake protocol.
-• Relevant clinical history recorded in electronic encounter.
-
-### Interview status
-Intake interview completed successfully. Patient queued for physician consultation."""
-
-        return {
-            "session_id": session_id,
-            "summary": fallback_summary
         }
 
 
@@ -2212,119 +2121,84 @@ CLARIFICATION RESULTS:
 {contradiction_text}
 """
 
+    sess = get_session_by_id(session_id)
+    doc_name = sess.get("doctor_name") if sess else "Dr. On-Duty Physician"
+    dept = sess.get("department") if sess else "General Medicine"
+    patient_name = sess.get("patient_name") if sess else ""
+    patient_id = sess.get("patient_id") if sess else ""
 
-    try:
+    doc_room = "OPD Room 105"
+    for doc in HOSPITAL_DOCTORS:
+        if doc["name"] == doc_name:
+            doc_room = doc.get("room", "OPD Room 105")
+            break
 
-        completion = client.chat.completions.create(
+    historical_emrs = []
+    if patient_id or patient_name:
+        try:
+            consent = get_external_consent(patient_id) if patient_id else None
+            if consent and consent.get("status") == "granted":
+                res = query_mock_external_emrs(patient_name, patient_id)
+                if isinstance(res, dict):
+                    historical_emrs = res.get("apollo_records", []) + res.get("city_records", [])
+        except Exception as emr_err:
+            print("[EMR lookup note]", emr_err)
 
-            model=GROQ_MODEL,
+    client, groq_err = get_groq_client()
+    final_report = None
 
-            messages=[
-                {
-                    "role": "system",
-                    "content": report_prompt
-                }
-            ],
+    if client is not None:
+        try:
+            extra_emr_prompt = ""
+            if historical_emrs:
+                extra_emr_prompt = "\nCONSENTED EXTERNAL HISTORICAL EMR RECORDS:\n"
+                for r in historical_emrs:
+                    extra_emr_prompt += f"- [{r.get('visit_date', 'Historical')}] {r.get('hospital_name', 'Hospital')}: Diagnosis: {r.get('diagnosis', 'N/A')}, Meds: {r.get('medications', 'N/A')}\n"
 
-            temperature=0.2,
+            completion = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": report_prompt + extra_emr_prompt
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=1500
+            )
 
-            max_tokens=1200
+            candidate = completion.choices[0].message.content.strip()
+            # Ensure candidate has key sections, else fallback to deterministic 9-section report
+            if "### Current symptoms" in candidate and "### Timeline" in candidate:
+                final_report = candidate
+            else:
+                print("[Groq AI Note] Model response missing expected sections; ensuring 9-section format.")
+        except Exception as e:
+            print("[Groq AI Note] Final report generation API failed:", e)
+
+    if not final_report:
+        print(f"[Clinical Intelligence] Generating complete 9-section Doctor-Ready Clinical Dossier (Groq client available={client is not None}).")
+        final_report = generate_deterministic_nine_section_report(
+            session_id=session_id,
+            messages=messages,
+            documents=documents,
+            contradictions=contradictions,
+            historical_emrs=historical_emrs
         )
 
+    otp_code = generate_session_otp(session_id, final_report)
 
-        final_report = (
-            completion
-            .choices[0]
-            .message
-            .content
-            .strip()
-        )
-
-        otp_code = generate_session_otp(session_id, final_report)
-        sess = get_session_by_id(session_id)
-        doc_name = sess.get("doctor_name") if sess else "Dr. On-Duty Physician"
-        dept = sess.get("department") if sess else "General Medicine"
-
-        doc_room = "OPD Room 105"
-        for doc in HOSPITAL_DOCTORS:
-            if doc["name"] == doc_name:
-                doc_room = doc.get("room", "OPD Room 105")
-                break
-
-        return {
-            "status": "completed",
-            "session_id": session_id,
-            "final_report": final_report,
-            "contradictions": contradictions,
-            "otp_code": otp_code,
-            "doctor_name": doc_name,
-            "department": dept,
-            "room": doc_room,
-            "queue_status": "ready_for_opd"
-        }
-
-
-    except Exception as e:
-
-        print(
-            "[Groq Note] Final report fallback:",
-            e
-        )
-
-        sess = get_session_by_id(session_id)
-        doc_name = sess.get("doctor_name") if sess else "Dr. On-Duty Physician"
-        dept = sess.get("department") if sess else "General Medicine"
-        doc_room = "OPD Room 105"
-        for doc in HOSPITAL_DOCTORS:
-            if doc["name"] == doc_name:
-                doc_room = doc.get("room", "OPD Room 105")
-                break
-
-        patient_complaint = "Patient consultation intake"
-        for m in (messages or []):
-            if m.get("sender") == "user":
-                patient_complaint = m.get("message", "")
-                break
-
-        final_report = f"""### Current symptoms
-{patient_complaint}
-
-### Symptom details
-Reported during structured self-service kiosk clinical interview.
-Encounter timeline and conversation recorded.
-
-### Associated symptoms
-• Reviewed through structured AI clinical intake protocol.
-• Pertinent negatives and positives documented.
-
-### Relevant history
-{conversation_text.strip()[:300] if conversation_text.strip() else 'No chronic conditions reported.'}
-
-### Medication information
-Patient reported standard medications and medical history as documented in transcript.
-
-### Extracted document information
-{document_text.strip() if document_text.strip() else 'No medical documents were uploaded.'}
-
-### Contradiction & clarification results
-{contradiction_text.strip() if contradiction_text.strip() else 'No clinically meaningful contradictions were detected.'}
-
-### Neutral clinical context
-Patient completed clinical intake questionnaire and verified details. Ready for physical examination and physician consultation."""
-
-        otp_code = generate_session_otp(session_id, final_report)
-
-        return {
-            "status": "completed",
-            "session_id": session_id,
-            "final_report": final_report,
-            "contradictions": contradictions,
-            "otp_code": otp_code,
-            "doctor_name": doc_name,
-            "department": dept,
-            "room": doc_room,
-            "queue_status": "ready_for_opd"
-        }
+    return {
+        "status": "completed",
+        "session_id": session_id,
+        "final_report": final_report,
+        "contradictions": contradictions,
+        "otp_code": otp_code,
+        "doctor_name": doc_name,
+        "department": dept,
+        "room": doc_room,
+        "queue_status": "ready_for_opd"
+    }
 
 
 # =============================================================================
