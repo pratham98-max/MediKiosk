@@ -1,0 +1,1083 @@
+/* =============================================================================
+   VITALTRACK DESIGN SYSTEM - MediKiosk Healthcare Staff Module
+   Inspired by the VitalTrack AI-Powered Hospital Management Dashboard
+   Tokens: Light green tint (#F3F7EA), Lime (#C9F27F), Dark Green (#0B3D1E)
+   ============================================================================= */
+
+:root {
+  --vt-bg: #f3f7ea;
+  --vt-card: #ffffff;
+  --vt-card-border: #e2ebe0;
+  --vt-card-hover: #fcfdfa;
+  --vt-dark-green: #0b3d1e;
+  --vt-dark-green-hover: #072b14;
+  --vt-lime: #c9f27f;
+  --vt-lime-hover: #bde96d;
+  --vt-lime-soft: #f0fad6;
+  --vt-mid-green: #1e9e4a;
+  --vt-text-main: #14281c;
+  --vt-text-muted: #5e7465;
+  --vt-text-light: #899c90;
+  --vt-crimson: #dc2626;
+  --vt-crimson-soft: #fee2e2;
+  --vt-amber: #d97706;
+  --vt-amber-soft: #fef3c7;
+  --vt-shadow-sm: 0 2px 8px rgba(11, 61, 30, 0.04);
+  --vt-shadow-md: 0 6px 20px rgba(11, 61, 30, 0.06);
+  --vt-shadow-lg: 0 16px 40px rgba(11, 61, 30, 0.1);
+  --vt-radius-card: 20px;
+  --vt-radius-pill: 999px;
+  --vt-sidebar-width: 250px;
+  --vt-sidebar-collapsed: 72px;
+}
+
+/* =============================================================================
+   LAYOUT CONTAINER
+   ============================================================================= */
+.vt-app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--vt-bg);
+  color: var(--vt-text-main);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.vt-app-container *,
+.vt-app-container *::before,
+.vt-app-container *::after {
+  box-sizing: border-box;
+}
+
+/* =============================================================================
+   SIDEBAR (COLLAPSIBLE)
+   ============================================================================= */
+.vt-sidebar {
+  width: var(--vt-sidebar-width);
+  background: #ffffff;
+  border-right: 1px solid var(--vt-card-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 50;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.vt-sidebar.collapsed {
+  width: var(--vt-sidebar-collapsed);
+}
+
+.vt-sidebar-header {
+  padding: 20px 18px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f5ed;
+}
+
+.vt-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--vt-text-main);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.vt-brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--vt-dark-green);
+  color: var(--vt-lime);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 19px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(11, 61, 30, 0.2);
+}
+
+.vt-brand-text {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--vt-dark-green);
+}
+
+.vt-brand-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--vt-lime);
+  color: var(--vt-dark-green);
+  border-radius: var(--vt-radius-pill);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.vt-collapse-btn {
+  background: #f3f7ea;
+  border: 1px solid #e1ebde;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--vt-text-muted);
+  font-size: 13px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.vt-collapse-btn:hover {
+  background: var(--vt-lime);
+  color: var(--vt-dark-green);
+}
+
+.vt-sidebar-nav {
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.vt-nav-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vt-text-light);
+  padding: 6px 12px 4px;
+  white-space: nowrap;
+}
+
+.vt-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--vt-radius-pill);
+  color: var(--vt-text-muted);
+  background: transparent;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.vt-nav-item:hover {
+  background: #f4f8ec;
+  color: var(--vt-dark-green);
+}
+
+.vt-nav-item.active {
+  background: var(--vt-lime);
+  color: var(--vt-dark-green);
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(201, 242, 127, 0.4);
+}
+
+.vt-nav-icon {
+  font-size: 16px;
+  width: 20px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.vt-nav-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--vt-radius-pill);
+  background: #eef5e7;
+  color: var(--vt-dark-green);
+}
+
+.vt-nav-item.active .vt-nav-badge {
+  background: #ffffff;
+  color: var(--vt-dark-green);
+}
+
+.vt-nav-badge.danger {
+  background: var(--vt-crimson);
+  color: #ffffff;
+}
+
+.vt-sidebar-footer {
+  padding: 14px 12px;
+  border-top: 1px solid #f0f5ed;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vt-staff-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #f8faf4;
+  border-radius: 14px;
+  border: 1px solid #e7efe4;
+}
+
+.vt-staff-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--vt-dark-green);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.vt-staff-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.vt-staff-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--vt-dark-green);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vt-staff-role {
+  font-size: 11px;
+  color: var(--vt-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =============================================================================
+   MAIN CONTENT AREA
+   ============================================================================= */
+.vt-main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--vt-bg);
+}
+
+/* =============================================================================
+   SLIM TOPBAR
+   ============================================================================= */
+.vt-topbar {
+  height: 70px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.vt-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--vt-card-border);
+  border-radius: var(--vt-radius-pill);
+  padding: 9px 18px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--vt-shadow-sm);
+  transition: all 0.18s ease;
+}
+
+.vt-search-box:focus-within {
+  border-color: var(--vt-dark-green);
+  box-shadow: 0 0 0 3px rgba(11, 61, 30, 0.08);
+}
+
+.vt-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13.5px;
+  color: var(--vt-text-main);
+  font-family: inherit;
+}
+
+.vt-search-input::placeholder {
+  color: var(--vt-text-light);
+}
+
+.vt-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.vt-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--vt-card-border);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--vt-text-muted);
+  font-size: 16px;
+  position: relative;
+  transition: all 0.15s ease;
+  box-shadow: var(--vt-shadow-sm);
+}
+
+.vt-icon-btn:hover {
+  background: #f7faf4;
+  color: var(--vt-dark-green);
+  border-color: var(--vt-dark-green);
+}
+
+.vt-badge-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--vt-crimson);
+}
+
+.vt-hosp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid var(--vt-card-border);
+  border-radius: var(--vt-radius-pill);
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vt-dark-green);
+  box-shadow: var(--vt-shadow-sm);
+}
+
+.vt-btn-cta-admit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--vt-lime);
+  color: var(--vt-dark-green);
+  border: 1px solid #bce668;
+  border-radius: var(--vt-radius-pill);
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(201, 242, 127, 0.45);
+  transition: all 0.18s ease;
+}
+
+.vt-btn-cta-admit:hover {
+  background: var(--vt-lime-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(201, 242, 127, 0.6);
+}
+
+/* =============================================================================
+   PAGE CONTENT WRAPPER
+   ============================================================================= */
+.vt-page-body {
+  padding: 0 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* =============================================================================
+   KPI CARDS GRID (TOP ROW)
+   ============================================================================= */
+.vt-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.vt-kpi-card {
+  background: var(--vt-card);
+  border: 1px solid var(--vt-card-border);
+  border-radius: var(--vt-radius-card);
+  padding: 18px 20px;
+  box-shadow: var(--vt-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.vt-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--vt-shadow-md);
+}
+
+.vt-kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vt-kpi-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vt-text-muted);
+}
+
+.vt-kpi-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--vt-radius-pill);
+}
+
+.vt-kpi-number-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.vt-kpi-number {
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--vt-text-main);
+  line-height: 1;
+}
+
+.vt-kpi-mini-gauge {
+  width: 52px;
+  height: 28px;
+}
+
+/* =============================================================================
+   MIDDLE ROW: AI RECOMMENDATIONS (WIDE) + CRITICAL ALERTS (NARROW)
+   ============================================================================= */
+.vt-mid-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1.15fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .vt-mid-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* AI RECOMMENDATIONS PANEL */
+.vt-panel {
+  background: var(--vt-card);
+  border: 1px solid var(--vt-card-border);
+  border-radius: var(--vt-radius-card);
+  padding: 22px 24px;
+  box-shadow: var(--vt-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vt-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vt-panel-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--vt-dark-green);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-btn-see-all {
+  background: var(--vt-dark-green);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--vt-radius-pill);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vt-btn-see-all:hover {
+  background: var(--vt-dark-green-hover);
+}
+
+/* AI Recommendations Grid */
+.vt-ai-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .vt-ai-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Featured Dark Green AI Card */
+.vt-ai-hero-card {
+  background: var(--vt-dark-green);
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(11, 61, 30, 0.25);
+}
+
+.vt-ai-hero-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vt-ai-chip-dark {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--vt-lime);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--vt-radius-pill);
+}
+
+.vt-ai-hero-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+  color: #ffffff;
+}
+
+.vt-ai-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-btn-ai-accept {
+  background: var(--vt-lime);
+  color: var(--vt-dark-green);
+  border: none;
+  border-radius: var(--vt-radius-pill);
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vt-btn-ai-accept:hover {
+  background: var(--vt-lime-hover);
+}
+
+.vt-btn-ai-dismiss {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--vt-radius-pill);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Secondary AI Cards Column */
+.vt-ai-sub-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vt-ai-card-sub {
+  background: #f8faf5;
+  border: 1px solid var(--vt-card-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.vt-ai-card-sub:hover {
+  background: #ffffff;
+  border-color: var(--vt-dark-green);
+}
+
+.vt-ai-card-sub-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--vt-text-muted);
+}
+
+.vt-ai-card-sub-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vt-text-main);
+  line-height: 1.35;
+}
+
+/* CRITICAL ALERTS PANEL (Rule 9 Dual-Alert Separation) */
+.vt-alerts-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #edf4ea;
+  padding-bottom: 8px;
+}
+
+.vt-alert-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--vt-radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vt-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vt-alert-tab-btn.active {
+  background: var(--vt-dark-green);
+  color: #ffffff;
+}
+
+.vt-alert-tab-btn.rf.active {
+  background: var(--vt-crimson);
+  color: #ffffff;
+}
+
+.vt-alert-tab-btn.mews.active {
+  background: var(--vt-amber);
+  color: #ffffff;
+}
+
+.vt-alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.vt-alert-item {
+  background: #fdfefe;
+  border: 1px solid #e7efe4;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.vt-alert-item.rf {
+  border-left: 4px solid var(--vt-crimson);
+  background: #fffafa;
+}
+
+.vt-alert-item.mews {
+  border-left: 4px solid var(--vt-amber);
+  background: #fffdf7;
+}
+
+.vt-alert-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vt-alert-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vt-text-main);
+  margin: 0;
+}
+
+.vt-alert-subtext {
+  font-size: 12px;
+  color: var(--vt-text-muted);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.vt-alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.vt-btn-alert-view {
+  background: #f0f7ec;
+  color: var(--vt-dark-green);
+  border: 1px solid #d5e8cd;
+  border-radius: var(--vt-radius-pill);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vt-btn-alert-ack {
+  background: var(--vt-crimson-soft);
+  color: var(--vt-crimson);
+  border: 1px solid #fca5a5;
+  border-radius: var(--vt-radius-pill);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =============================================================================
+   BOTTOM ROW: ANALYTICS CHARTS (Patient Flow, Ward Utilization, MEWS, Heatmap)
+   ============================================================================= */
+.vt-charts-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .vt-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vt-chart-card {
+  background: var(--vt-card);
+  border: 1px solid var(--vt-card-border);
+  border-radius: var(--vt-radius-card);
+  padding: 22px 24px;
+  box-shadow: var(--vt-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vt-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vt-chart-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vt-dark-green);
+  margin: 0;
+}
+
+/* Range Toggle Pill (6 Month / 1 Month / 7 Day / 1 Day) */
+.vt-range-toggle {
+  display: inline-flex;
+  background: #f1f6ec;
+  border-radius: var(--vt-radius-pill);
+  padding: 3px;
+  gap: 2px;
+}
+
+.vt-range-btn {
+  border: none;
+  background: transparent;
+  border-radius: var(--vt-radius-pill);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vt-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vt-range-btn.active {
+  background: var(--vt-dark-green);
+  color: #ffffff;
+}
+
+/* Ward Utilization Gauges Row */
+.vt-gauges-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+
+.vt-gauge-box {
+  background: #f9fbf7;
+  border: 1px solid var(--vt-card-border);
+  border-radius: 14px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.vt-gauge-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--vt-dark-green);
+}
+
+.vt-gauge-label {
+  font-size: 10.5px;
+  color: var(--vt-text-muted);
+  font-weight: 600;
+}
+
+/* =============================================================================
+   BED TILE (WARD BED MAP)
+   ============================================================================= */
+.vt-bed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.vt-bed-tile {
+  background: #ffffff;
+  border: 1px solid var(--vt-card-border);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--vt-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.vt-bed-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--vt-shadow-md);
+  border-color: var(--vt-dark-green);
+}
+
+.vt-bed-tile.icu {
+  border-top: 4px solid var(--vt-crimson);
+}
+
+.vt-bed-tile.general {
+  border-top: 4px solid var(--vt-mid-green);
+}
+
+.vt-bed-tile.vacant {
+  border-style: dashed;
+  background: #fafcf8;
+}
+
+/* =============================================================================
+   PATIENT TABLE / CARD ROW
+   ============================================================================= */
+.vt-table-wrap {
+  background: #ffffff;
+  border: 1px solid var(--vt-card-border);
+  border-radius: var(--vt-radius-card);
+  padding: 20px;
+  box-shadow: var(--vt-shadow-sm);
+  overflow-x: auto;
+}
+
+.vt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.vt-table th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--vt-text-light);
+  border-bottom: 1px solid #edf4ea;
+}
+
+.vt-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f2f7ef;
+  color: var(--vt-text-main);
+}
+
+.vt-table tr:hover td {
+  background: #fbfdf9;
+  cursor: pointer;
+}
+
+/* =============================================================================
+   RIGHT SLIDING DRAWER
+   ============================================================================= */
+.vt-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 61, 30, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+
+.vt-drawer {
+  width: 100%;
+  max-width: 540px;
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  animation: slideDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 24px;
+  gap: 18px;
+}
+
+@keyframes slideDrawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* =============================================================================
+   KANBAN BOARD FOR OPD QUEUE
+   ============================================================================= */
+.vt-kanban-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .vt-kanban-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vt-kanban-col {
+  background: #f8faf5;
+  border: 1px solid var(--vt-card-border);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 400px;
+}
+
+.vt-kanban-col-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 4px;
+}
+
+.vt-kanban-col-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vt-dark-green);
+}
+
+.vt-kanban-card {
+  background: #ffffff;
+  border: 1px solid #e5eee2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: var(--vt-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vt-kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--vt-shadow-md);
+  border-color: var(--vt-dark-green);
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVENESS (< 768px)
+   ============================================================================= */
+@media (max-width: 767px) {
+  .vt-sidebar {
+    position: fixed;
+    left: -260px;
+    z-index: 999;
+  }
+
+  .vt-sidebar.open-mobile {
+    left: 0;
+  }
+
+  .vt-page-body {
+    padding: 0 16px 24px;
+  }
+
+  .vt-topbar {
+    padding: 0 16px;
+  }
+
+  .vt-gauges-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

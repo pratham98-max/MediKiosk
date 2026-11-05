@@ -3,6 +3,7 @@ import "./App.css";
 import PortalHeader from "./components/PortalHeader";
 import PatientAuth from "./components/PatientAuth";
 import PatientWelcome from "./components/PatientWelcome";
+import LandingShowcase from "./components/LandingShowcase";
 import DoctorPortal from "./components/DoctorPortal";
 import StaffPortal from "./components/StaffPortal";
 import HospitalSelector from "./components/HospitalSelector";
@@ -1305,10 +1306,12 @@ function App() {
           hasActiveSession={false}
         />
         <main className="portal-main-content">
-          <PatientAuth
-            onLoginSuccess={handleLoginSuccess}
-            apiBase={API_BASE}
-          />
+          <LandingShowcase>
+            <PatientAuth
+              onLoginSuccess={handleLoginSuccess}
+              apiBase={API_BASE}
+            />
+          </LandingShowcase>
         </main>
       </div>
     );

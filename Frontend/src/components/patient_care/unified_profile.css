@@ -1,0 +1,1145 @@
+/* =============================================================================
+   UNIFIED PATIENT PROFILE MODAL - REDESIGNED CLINICAL DASHBOARD
+   Scoped under .unified-profile-window and .upm-*
+   Strict MediKiosk Design System Palette Compliance (Eduverse+ Anatomy Direction)
+   ============================================================================= */
+
+/* ROOT MODAL WINDOW RESET & GEOMETRY */
+.unified-profile-window {
+  width: 96vw !important;
+  max-width: 1460px !important;
+  height: 94vh !important;
+  max-height: 96vh !important;
+  background: var(--paper, #f7f9f8) !important;
+  border-radius: 26px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 24px 64px -12px rgba(18, 59, 51, 0.22), 0 0 0 1px var(--line, #e3ebe8) !important;
+  color: var(--ink, #142420) !important;
+  font-family: inherit !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  box-sizing: border-box !important;
+  border: none !important;
+}
+
+.unified-profile-window *,
+.unified-profile-window *::before,
+.unified-profile-window *::after {
+  box-sizing: border-box;
+}
+
+/* Base reset inside modal to defeat aggressive App.css styles */
+.unified-profile-window table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+}
+
+.unified-profile-window th,
+.unified-profile-window td {
+  border: none !important;
+  padding: 8px 12px !important;
+  line-height: 1.3 !important;
+}
+
+.unified-profile-window button {
+  font-family: inherit;
+}
+
+/* =============================================================================
+   STICKY HEADER
+   ============================================================================= */
+.upm-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--panel, #ffffff);
+  border-bottom: 1px solid var(--line, #e2eae6);
+  gap: 16px;
+  z-index: 10;
+}
+
+.upm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.upm-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e8f5ec 0%, #cceadc 55%, #1f5c50 160%);
+  color: var(--teal-deep, #123b33);
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(18, 59, 51, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 19px;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.upm-header-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.upm-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upm-patient-name {
+  margin: 0;
+  font-size: clamp(20px, 1.8vw, 26px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--teal-deep, #123b33);
+  line-height: 1.15;
+}
+
+.upm-chips-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.upm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.upm-chip-id {
+  background: #f1f5f3;
+  color: var(--ink-soft, #5c6469);
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.upm-chip-demog {
+  background: #eef3f1;
+  color: var(--ink, #142420);
+}
+
+.upm-chip-opd {
+  background: var(--marigold-soft, #fef8e7);
+  color: #7a5b00;
+}
+
+.upm-chip-icu {
+  background: var(--alert-soft, #fdeeed);
+  color: var(--alert, #dc2626);
+  font-weight: 600;
+}
+
+.upm-chip-bed {
+  background: var(--ok-soft, #e8f5ec);
+  color: var(--ok, #16a34a);
+  font-weight: 600;
+}
+
+.upm-subline {
+  font-size: 12px;
+  color: var(--ink-soft, #5c6469);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upm-subline strong {
+  color: var(--ink, #142420);
+  font-weight: 600;
+}
+
+.upm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.upm-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid var(--line, #e2eae6);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink, #142420);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.upm-btn-refresh:hover:not(:disabled) {
+  background: #f4f8f6;
+  border-color: var(--teal, #1f5c50);
+  color: var(--teal-deep, #123b33);
+}
+
+.upm-btn-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f4f3;
+  border: 1px solid transparent;
+  color: var(--ink-soft, #5c6469);
+  font-size: 20px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.upm-btn-close:hover {
+  background: var(--alert-soft, #fdeeed);
+  color: var(--alert, #dc2626);
+}
+
+.upm-btn-close:focus-visible,
+.upm-btn-refresh:focus-visible,
+.upm-tab-btn:focus-visible {
+  outline: 2px solid var(--teal, #1f5c50);
+  outline-offset: 2px;
+}
+
+/* =============================================================================
+   ALERT STRIP (Rule 9 Safeguard Isolation)
+   ============================================================================= */
+.upm-alert-strip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 28px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--line, #e2eae6);
+  flex-wrap: wrap;
+}
+
+.upm-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* Rule 9 Isolation: Chat Red Flag stays crimson */
+.upm-alert-rf {
+  background: var(--alert-soft, #fdeeed);
+  border: 1px solid #f9c7c4;
+  color: var(--alert, #dc2626);
+}
+
+/* Rule 9 Isolation: MEWS Alert stays amber/orange */
+.upm-alert-mews {
+  background: var(--marigold-soft, #fef8e7);
+  border: 1px solid #f6e3ad;
+  color: #8c5b00;
+}
+
+.upm-alert-mews-crit {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+/* ACTION FEEDBACK LIVE REGION */
+.upm-feedback-banner {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 28px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.upm-feedback-banner.success {
+  background: var(--ok-soft, #e8f5ec);
+  color: #12572b;
+  border-bottom: 1px solid #c3e6ce;
+}
+
+.upm-feedback-banner.error {
+  background: var(--alert-soft, #fdeeed);
+  color: #8e1f1a;
+  border-bottom: 1px solid #f7c0be;
+}
+
+.upm-feedback-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0 4px;
+}
+
+/* =============================================================================
+   PILL NAVIGATION (8 Tabs - NO horizontal scrollbar, wraps cleanly)
+   ============================================================================= */
+.upm-tab-strip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 28px;
+  background: var(--panel, #ffffff);
+  border-bottom: 1px solid var(--line, #e2eae6);
+  flex-wrap: wrap;
+}
+
+.upm-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-soft, #5c6469);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.upm-tab-btn:hover {
+  background: #f0f4f2;
+  color: var(--teal-deep, #123b33);
+}
+
+.upm-tab-btn.active {
+  background: var(--teal-deep, #123b33);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(18, 59, 51, 0.2);
+}
+
+.upm-tab-count {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.upm-tab-btn.active .upm-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* =============================================================================
+   MODAL SCROLLABLE BODY
+   ============================================================================= */
+.upm-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px 28px;
+  background: var(--paper, #f7f9f8);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =============================================================================
+   OVERVIEW 3-COLUMN DESKTOP LAYOUT (>= 1200px)
+   Matches Eduverse+ Dashboard: Left vitals/profile, Centre anatomy, Right organ/MEWS
+   ============================================================================= */
+.upm-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(370px, 1.28fr) minmax(320px, 1.05fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1199px) {
+  .upm-overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .upm-overview-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.upm-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* =============================================================================
+   CARDS (Eduverse+ Soft Modern Direction)
+   Large rounded radius, calm canvas, layered soft shadow, plain titles
+   ============================================================================= */
+.upm-card {
+  background: var(--panel, #ffffff);
+  border-radius: 24px;
+  border: 1px solid var(--line, #e6edea);
+  box-shadow: 0 4px 18px rgba(18, 59, 51, 0.04), 0 1px 3px rgba(18, 59, 51, 0.02);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upm-card:hover {
+  box-shadow: 0 8px 24px rgba(18, 59, 51, 0.07);
+}
+
+.upm-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.upm-card-title {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--teal-deep, #123b33);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: -0.01em;
+}
+
+.upm-card-subtitle {
+  font-size: 11.5px;
+  color: var(--ink-soft, #5c6469);
+  font-weight: 400;
+}
+
+/* =============================================================================
+   TOP VITAL DUAL CARDS (Like Blood Status 130/80 & 98% in reference)
+   ============================================================================= */
+.upm-vital-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.upm-vital-hero-card {
+  background: var(--panel, #ffffff);
+  border: 1px solid var(--line, #e6edea);
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 14px rgba(18, 59, 51, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.18s ease;
+}
+
+.upm-vital-hero-card:hover {
+  border-color: var(--teal, #1f5c50);
+}
+
+.upm-vital-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.upm-vital-hero-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f0f7f4;
+  color: var(--teal, #1f5c50);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
+.upm-vital-hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--ok-soft, #e8f5ec);
+  color: var(--ok, #16a34a);
+}
+
+.upm-vital-hero-status.warn {
+  background: var(--marigold-soft, #fef8e7);
+  color: #7a5b00;
+}
+
+.upm-vital-hero-status.bad {
+  background: var(--alert-soft, #fdeeed);
+  color: var(--alert, #dc2626);
+}
+
+.upm-vital-hero-label {
+  font-size: 11.5px;
+  color: var(--ink-soft, #5c6469);
+  margin-top: 2px;
+}
+
+.upm-vital-hero-val {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.upm-num-hero {
+  font-size: clamp(24px, 2vw, 30px);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--ink, #142420);
+  letter-spacing: -0.03em;
+}
+
+.upm-unit-hero {
+  font-size: 11px;
+  color: var(--ink-soft, #5c6469);
+  font-weight: 400;
+}
+
+/* =============================================================================
+   CENTRE COLUMN: HUMAN ANATOMICAL FIGURE (Replacing standalone heart)
+   ============================================================================= */
+.upm-body-figure-card {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #ffffff 0%, #f4f8f6 68%, #e9f2ee 100%);
+  padding: 20px 16px 16px;
+  border-radius: 26px;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line, #e6edea);
+  box-shadow: 0 4px 20px rgba(18, 59, 51, 0.05);
+}
+
+.upm-body-figure-stage {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upm-body-svg-wrap {
+  width: 250px;
+  height: 430px;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 14px 28px rgba(18, 59, 51, 0.12));
+}
+
+.upm-body-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Anatomical interactive pins on the body */
+.upm-body-pin {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--teal, #1f5c50);
+  box-shadow: 0 0 10px rgba(31, 92, 80, 0.4);
+  cursor: pointer;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  transition: transform 0.18s ease;
+}
+
+.upm-body-pin:hover {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+
+.upm-body-pin::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: var(--teal, #1f5c50);
+}
+
+/* Floating interactive callouts around anatomical body */
+.upm-callout-pill {
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid var(--line, #e2eae6);
+  border-radius: 999px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 16px rgba(18, 59, 51, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  white-space: nowrap;
+}
+
+.upm-callout-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(18, 59, 51, 0.16);
+  border-color: var(--teal, #1f5c50);
+}
+
+.upm-callout-pill small {
+  font-size: 11px;
+  color: var(--ink-soft, #5c6469);
+  display: block;
+  line-height: 1;
+}
+
+.upm-callout-pill strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink, #142420);
+  line-height: 1.1;
+}
+
+.upm-callout-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal, #1f5c50);
+  flex-shrink: 0;
+}
+
+/* Connecting leaders */
+.upm-leader-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.upm-leader-line {
+  stroke: rgba(92, 100, 105, 0.4);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+
+/* Positions around human body */
+.upm-pos-cardiac { top: 120px; right: 12px; }
+.upm-pos-pulmonary { top: 135px; left: 10px; }
+.upm-pos-brachial { top: 220px; left: 8px; }
+.upm-pos-core { top: 235px; right: 12px; }
+
+/* =============================================================================
+   RIGHT COLUMN: DEDICATED "HEART-RATE ACTIVITY" CARD WITH 3D ORGAN
+   Matches reference image: hero 120 bpm with 3D heart beside it
+   ============================================================================= */
+.upm-organ-card {
+  background: #ffffff;
+  border: 1px solid var(--line, #e6edea);
+  border-radius: 24px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 18px rgba(18, 59, 51, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.upm-organ-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.upm-organ-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.upm-organ-info h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--teal-deep, #123b33);
+}
+
+.upm-organ-info p {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  color: var(--ink-soft, #5c6469);
+  line-height: 1.35;
+}
+
+.upm-organ-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.upm-organ-hr-number {
+  font-size: clamp(32px, 2.6vw, 42px);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--ink, #142420);
+  letter-spacing: -0.04em;
+}
+
+.upm-organ-hr-unit {
+  font-size: 13px;
+  color: var(--ink-soft, #5c6469);
+  font-weight: 400;
+}
+
+/* Beside: 3D Glowing Glass Heart Illustration */
+.upm-organ-heart-box {
+  width: 105px;
+  height: 120px;
+  flex-shrink: 0;
+  position: relative;
+  filter: drop-shadow(0 6px 16px rgba(179, 40, 58, 0.22));
+}
+
+.upm-organ-heart-box svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* =============================================================================
+   SEGMENTED PROGRESS BARS (Eduverse+ Steps Tracker Style)
+   ============================================================================= */
+.upm-segmented-bar {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 8px;
+  margin: 6px 0;
+}
+
+.upm-segment {
+  flex: 1;
+  height: 100%;
+  border-radius: 999px;
+  background: #e6edea;
+  transition: background-color 0.25s ease;
+}
+
+.upm-segment.filled-ok {
+  background: var(--ok, #16a34a);
+}
+
+.upm-segment.filled-warn {
+  background: var(--marigold, #d97706);
+}
+
+.upm-segment.filled-danger {
+  background: var(--alert, #dc2626);
+}
+
+.upm-segment.filled-teal {
+  background: var(--teal, #1f5c50);
+}
+
+/* MEWS Parameter 5-Row Breakdown */
+.upm-mews-params {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upm-mews-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #f8faf9;
+  border: 1px solid #edf2f0;
+}
+
+.upm-mews-row-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--ink, #142420);
+}
+
+.upm-mews-row-head span:first-child {
+  color: var(--ink-soft, #5c6469);
+  font-weight: 500;
+}
+
+.upm-mews-row-head strong {
+  font-weight: 600;
+}
+
+/* =============================================================================
+   SPARKLINES & RECENT TIMELINE
+   ============================================================================= */
+.upm-sparkline-wrap {
+  width: 100%;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.upm-sparkline-wrap svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.upm-spark-path {
+  fill: none;
+  stroke: var(--teal, #1f5c50);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.upm-empty-sparkline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 11px;
+  color: var(--ink-soft, #5c6469);
+  border-top: 1px dashed #dbe5e1;
+  margin-top: 4px;
+}
+
+.upm-btn-mini {
+  background: var(--ok-soft, #e8f5ec);
+  border: 1px solid #bce1ca;
+  color: var(--teal-deep, #123b33);
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.upm-btn-mini:hover {
+  background: #d4ebd9;
+}
+
+.upm-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upm-recent-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fbfdfc;
+  border: 1px solid var(--line, #e8efec);
+  border-radius: 14px;
+  transition: all 0.15s ease;
+}
+
+.upm-recent-item:hover {
+  background: #ffffff;
+  border-color: var(--teal, #1f5c50);
+}
+
+.upm-recent-icon {
+  font-size: 17px;
+  line-height: 1;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.upm-recent-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.upm-recent-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.upm-recent-top strong {
+  font-size: 12.5px;
+  color: var(--teal-deep, #123b33);
+  font-weight: 600;
+}
+
+.upm-recent-top small {
+  font-size: 10.5px;
+  color: var(--ink-soft, #5c6469);
+  white-space: nowrap;
+}
+
+.upm-recent-desc {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--ink, #142420);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* =============================================================================
+   DISCHARGE READINESS & CRITERIA
+   ============================================================================= */
+.upm-criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upm-criteria-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 12px;
+  background: #f9fbfb;
+  border: 1px solid #ebf2ef;
+  font-size: 12px;
+}
+
+.upm-criteria-item.met {
+  border-left: 3px solid var(--ok, #16a34a);
+}
+
+.upm-criteria-item.unmet {
+  border-left: 3px solid #cbd5e1;
+}
+
+.upm-crit-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.upm-crit-badge.met {
+  background: var(--ok-soft, #e8f5ec);
+  color: var(--ok, #16a34a);
+}
+
+.upm-crit-badge.unmet {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* =============================================================================
+   BUTTONS
+   ============================================================================= */
+.upm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: var(--teal, #1f5c50);
+  border: 1px solid var(--teal, #1f5c50);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(31, 92, 80, 0.2);
+}
+
+.upm-btn-primary:hover:not(:disabled) {
+  background: var(--teal-deep, #123b33);
+  border-color: var(--teal-deep, #123b33);
+}
+
+.upm-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid var(--line, #e2eae6);
+  border-radius: 999px;
+  color: var(--ink, #142420);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.upm-btn-secondary:hover:not(:disabled) {
+  background: #f4f8f6;
+  border-color: var(--teal, #1f5c50);
+  color: var(--teal-deep, #123b33);
+}
+
+.upm-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--alert, #dc2626);
+  border: 1px solid var(--alert, #dc2626);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.upm-btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.upm-btn-primary:disabled,
+.upm-btn-secondary:disabled,
+.upm-btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* =============================================================================
+   FOOTER
+   ============================================================================= */
+.upm-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 28px;
+  background: var(--panel, #ffffff);
+  border-top: 1px solid var(--line, #e2eae6);
+}
+
+.upm-footer-id {
+  font-size: 11.5px;
+  color: var(--ink-soft, #5c6469);
+}
+
+.upm-footer-id code {
+  background: #f1f5f3;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: var(--ink, #142420);
+}
+
+/* =============================================================================
+   RESPONSIVE FULL-SCREEN SHEET ON MOBILE (< 768px)
+   ============================================================================= */
+@media (max-width: 767px) {
+  .unified-profile-window {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .upm-header {
+    padding: 12px 16px;
+  }
+
+  .upm-alert-strip,
+  .upm-tab-strip,
+  .upm-body,
+  .upm-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .upm-card,
+  .upm-organ-card,
+  .upm-body-figure-card {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .upm-body-figure-card {
+    min-height: 400px;
+  }
+
+  .upm-callout-pill {
+    padding: 4px 10px;
+  }
+
+  .upm-vital-dual-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+   ACCESSIBILITY & MOTION PREFERENCES
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .unified-profile-window,
+  .upm-card,
+  .upm-tab-btn,
+  .upm-callout-pill,
+  .upm-beat,
+  .upm-core,
+  .upm-body-pin {
+    transition: none !important;
+    animation: none !important;
+  }
+}

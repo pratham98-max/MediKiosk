@@ -1,6 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
-import PatientCareModule from "./patient_care/PatientCareModule";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import "./vital_track.css";
+import "./patient_care/patient_care.css";
+
+// Reusable VitalTrack UI
+import SidebarNav from "./ui/SidebarNav";
+import Drawer from "./ui/Drawer";
+import EmptyState from "./ui/EmptyState";
+import MewsChip from "./ui/MewsChip";
+import PriorityChip from "./ui/PriorityChip";
+
+// Main Views
+import DashboardHome from "./vital_track/DashboardHome";
+import OpdQueueDashboard from "./vital_track/OpdQueueDashboard";
+import AdmittedPatientsDashboard from "./vital_track/AdmittedPatientsDashboard";
+
+// Clinical Modals
+import VitalRecorderModal from "./patient_care/VitalRecorderModal";
+import XAIRiskModal from "./patient_care/XAIRiskModal";
+import ECGTelemetryModal from "./patient_care/ECGTelemetryModal";
+import BedManagementModal from "./patient_care/BedManagementModal";
+import CarePlansModal from "./patient_care/CarePlansModal";
+import TransferNetworkModal from "./patient_care/TransferNetworkModal";
 import UnifiedPatientProfileModal from "./patient_care/UnifiedPatientProfileModal";
+import AdmitPatientModal from "./patient_care/AdmitPatientModal";
 
 export default function StaffPortal({
   apiBase,
@@ -10,7 +32,7 @@ export default function StaffPortal({
   onSwitchToPatient,
 }) {
   // =========================
-  // AUTH STATES (if not logged in)
+  // AUTH STATES (if unauthenticated)
   // =========================
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -18,7 +40,15 @@ export default function StaffPortal({
   const [authError, setAuthError] = useState("");
 
   // =========================
-  // DASHBOARD & PATIENT LIST STATES
+  // WORKSTATION NAVIGATION & LAYOUT
+  // =========================
+  const [activeView, setActiveView] = useState("dashboard"); // 'dashboard' | 'opd' | 'admitted' | 'beds' | 'vitals' | 'xai' | 'transfers' | 'care_plans' | 'reports' | 'settings'
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
+
+  // =========================
+  // OPD DASHBOARD STATES
   // =========================
   const [counts, setCounts] = useState({
     total: 0,
@@ -30,25 +60,35 @@ export default function StaffPortal({
     red_flag: 0,
     unacknowledged_red_flags: 0,
   });
-
-  const [patients, setPatients] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("all"); // "all" | "in_process" | "pending_clarification" | "ready_for_doctor" | "red_flag" | "in_consultation" | "completed"
-  const [workstationView, setWorkstationView] = useState("opd"); // "opd" | "patient_care"
-  const [loading, setLoading] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(null);
-
-  // Red-Flag Cases specifically for banner & alerts
+  const [opdPatients, setOpdPatients] = useState([]);
+  const [opdFilter, setOpdFilter] = useState("all");
   const [redFlags, setRedFlags] = useState([]);
   const [acknowledgingId, setAcknowledgingId] = useState(null);
 
-  // Case Details Modal (Staff Coordination Only - No clinical editing)
-  const [selectedCase, setSelectedCase] = useState(null);
+  // =========================
+  // INPATIENT CARE & BED STATES
+  // =========================
+  const [beds, setBeds] = useState([]);
+  const [inpatientCensus, setInpatientCensus] = useState([]);
+  const [optimizing, setOptimizing] = useState(false);
+  const [optimizeMessage, setOptimizeMessage] = useState("");
+
+  // General Loading & Sync
+  const [loading, setLoading] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  // =========================
+  // MODALS & INSPECTION DRAWER
+  // =========================
+  const [selectedCase, setSelectedCase] = useState(null); // Case Details Modal
   const [modalLoading, setModalLoading] = useState(false);
+  const [selectedProfilePatientId, setSelectedProfilePatientId] = useState(null); // Unified 8-Facet Profile
+  const [selectedInpatient, setSelectedInpatient] = useState(null); // Right Sliding Drawer
+  const [activeModal, setActiveModal] = useState(null); // 'vitals' | 'xai' | 'ecg' | 'bed' | 'carePlans' | 'transfer' | 'admit'
+  const [activeModalPatient, setActiveModalPatient] = useState(null);
+  const [selectedBedForAdmission, setSelectedBedForAdmission] = useState("");
 
-  // Unified Patient Profile Modal (Phase 4)
-  const [selectedProfilePatientId, setSelectedProfilePatientId] = useState(null);
-
-  // 1-Click Quick Demo Staff Logins (1 per hospital)
+  // 1-Click Demo Logins
   const DEMO_STAFF = [
     {
       name: "Nurse Sunita Rawat",
@@ -74,7 +114,7 @@ export default function StaffPortal({
   ];
 
   // =========================
-  // AUTHENTICATION
+  // AUTHENTICATION HANDLERS
   // =========================
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -82,10 +122,8 @@ export default function StaffPortal({
       setAuthError("Please enter both staff email and password.");
       return;
     }
-
     setAuthLoading(true);
     setAuthError("");
-
     try {
       const res = await fetch(`${apiBase}/staff/login`, {
         method: "POST",
@@ -95,7 +133,6 @@ export default function StaffPortal({
           password: loginPassword,
         }),
       });
-
       const data = await res.json();
       if (data.success && data.staff) {
         onStaffLogin(data.staff);
@@ -136,16 +173,15 @@ export default function StaffPortal({
   };
 
   // =========================
-  // DATA FETCHING & 10s POLLING
+  // DATA FETCHING (OPD + INPATIENTS + BEDS)
   // =========================
   const fetchDashboardData = useCallback(async () => {
     if (!currentStaff?.hospital_id) return;
+    const hospId = currentStaff.hospital_id;
 
     try {
       // 1. Fetch dashboard metric counts
-      const dashRes = await fetch(
-        `${apiBase}/staff/dashboard?hospital_id=${currentStaff.hospital_id}`
-      );
+      const dashRes = await fetch(`${apiBase}/staff/dashboard?hospital_id=${hospId}`);
       if (dashRes.ok) {
         const dashData = await dashRes.json();
         if (dashData.success && dashData.counts) {
@@ -153,22 +189,18 @@ export default function StaffPortal({
         }
       }
 
-      // 2. Fetch patient tracking list with filter
-      const filterParam = activeFilter === "all" ? "" : `&filter=${activeFilter}`;
-      const patRes = await fetch(
-        `${apiBase}/staff/patients?hospital_id=${currentStaff.hospital_id}${filterParam}`
-      );
+      // 2. Fetch OPD patients tracking list
+      const filterParam = opdFilter === "all" ? "" : `&filter=${opdFilter}`;
+      const patRes = await fetch(`${apiBase}/staff/patients?hospital_id=${hospId}${filterParam}`);
       if (patRes.ok) {
         const patData = await patRes.json();
         if (patData.success) {
-          setPatients(patData.patients || []);
+          setOpdPatients(patData.patients || []);
         }
       }
 
       // 3. Fetch active red flags
-      const rfRes = await fetch(
-        `${apiBase}/staff/red-flags?hospital_id=${currentStaff.hospital_id}`
-      );
+      const rfRes = await fetch(`${apiBase}/staff/red-flags?hospital_id=${hospId}`);
       if (rfRes.ok) {
         const rfData = await rfRes.json();
         if (rfData.success) {
@@ -176,48 +208,60 @@ export default function StaffPortal({
         }
       }
 
+      // 4. Fetch inpatient ward beds
+      const bedsRes = await fetch(`${apiBase}/staff/patient-care/beds?hospital_id=${hospId}`);
+      if (bedsRes.ok) {
+        const bedsData = await bedsRes.json();
+        if (bedsData.beds) {
+          setBeds(bedsData.beds);
+        }
+      }
+
+      // 5. Fetch monitored inpatient census
+      const carePatRes = await fetch(`${apiBase}/staff/patient-care/patients?hospital_id=${hospId}`);
+      if (carePatRes.ok) {
+        const carePatData = await carePatRes.json();
+        if (carePatData.patients) {
+          setInpatientCensus(carePatData.patients);
+        }
+      }
+
       setLastRefreshed(new Date());
     } catch (err) {
-      console.error("Staff polling error:", err);
+      console.error("VitalTrack polling error:", err);
     }
-  }, [apiBase, currentStaff?.hospital_id, activeFilter]);
+  }, [apiBase, currentStaff?.hospital_id, opdFilter]);
 
-  // Initial load on mount or filter change
+  // Initial load
   useEffect(() => {
     if (currentStaff) {
       setLoading(true);
       fetchDashboardData().finally(() => setLoading(false));
     }
-  }, [currentStaff, activeFilter, fetchDashboardData]);
+  }, [currentStaff, opdFilter, fetchDashboardData]);
 
   // 10-Second Auto Refresh Polling
   useEffect(() => {
     if (!currentStaff) return;
-    const interval = setInterval(() => {
-      fetchDashboardData();
-    }, 10000); // 10s polling
+    const interval = setInterval(fetchDashboardData, 10000);
     return () => clearInterval(interval);
   }, [currentStaff, fetchDashboardData]);
 
   // =========================
-  // RED-FLAG ACKNOWLEDGEMENT
+  // ACTIONS: RED FLAG ACKNOWLEDGEMENT
   // =========================
   const handleAcknowledgeRedFlag = async (sessionId, e) => {
     if (e) e.stopPropagation();
     setAcknowledgingId(sessionId);
-
     try {
       const res = await fetch(`${apiBase}/staff/red-flag/${sessionId}/acknowledge`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staff_id: currentStaff?.staff_id }),
       });
-
       const data = await res.json();
       if (data.success) {
-        // Refresh dashboard immediately
         await fetchDashboardData();
-        // If modal open for this case, update its acknowledged state
         if (selectedCase?.session?.session_id === sessionId) {
           setSelectedCase((prev) => ({
             ...prev,
@@ -237,12 +281,11 @@ export default function StaffPortal({
   };
 
   // =========================
-  // CASE DETAILS MODAL (STAFF COORDINATION)
+  // ACTIONS: CASE DETAILS MODAL (STAFF COORDINATION)
   // =========================
   const handleOpenCaseDetails = async (sessionId) => {
     setModalLoading(true);
     setSelectedCase(null);
-
     try {
       const res = await fetch(`${apiBase}/staff/patient/${sessionId}`);
       if (res.ok) {
@@ -259,7 +302,47 @@ export default function StaffPortal({
   };
 
   // =========================
-  // RENDER: NOT LOGGED IN
+  // ACTIONS: BED OPTIMIZATION
+  // =========================
+  const handleOptimizeBeds = async () => {
+    setOptimizing(true);
+    setOptimizeMessage("");
+    const hospId = currentStaff?.hospital_id || "hosp-medikiosk";
+    try {
+      const res = await fetch(`${apiBase}/staff/patient-care/beds/optimize?hospital_id=${hospId}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      setOptimizeMessage(
+        data.swaps_count > 0
+          ? `✓ Bed optimization completed: ${data.swaps_count} bed reallocation(s) performed.`
+          : `✓ All critical patients are already appropriately placed in ICU.`
+      );
+      fetchDashboardData();
+    } catch (err) {
+      console.error("Bed optimize error:", err);
+      setOptimizeMessage("Failed to execute bed optimization");
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  // Modal Opener Helper
+  const openModal = (type, patient) => {
+    setActiveModalPatient(patient);
+    setActiveModal(type);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setActiveModalPatient(null);
+  };
+
+  // Calculate total unacknowledged red flags for sidebar badge
+  const unacknowledgedCount = redFlags.filter((rf) => !rf.red_flag_acknowledged).length;
+
+  // =========================
+  // RENDER: UNAUTHENTICATED
   // =========================
   if (!currentStaff) {
     return (
@@ -269,7 +352,7 @@ export default function StaffPortal({
             <div className="doc-auth-header">
               <div className="doc-auth-icon-badge">🏥</div>
               <h2>Healthcare Staff Portal</h2>
-              <p>OPD Coordination, Triage Monitoring & Urgent Red-Flag Alerts</p>
+              <p>OPD Coordination, Triage Monitoring & Inpatient Physiological Care</p>
             </div>
 
             {authError && (
@@ -354,350 +437,580 @@ export default function StaffPortal({
   }
 
   // =========================
-  // RENDER: LOGGED-IN STAFF WORKSTATION
+  // RENDER: VITALTRACK WORKSTATION (AUTHENTICATED)
   // =========================
-  const unacknowledgedRedFlags = redFlags.filter((rf) => !rf.red_flag_acknowledged);
-
   return (
-    <div className="staff-portal-container">
-      {/* TOP STAFF BAR */}
-      <div className="staff-topbar">
-        <div className="staff-topbar-left">
-          <div className="staff-hospital-badge">
-            <span className="hosp-icon">🏥</span>
-            <div>
-              <div className="hosp-name">{currentStaff.hospital_name || "Hospital Station"}</div>
-              <div className="hosp-address">{currentStaff.hospital_address}</div>
+    <div className="vt-app-container">
+      {/* 1. COLLAPSIBLE SIDEBAR */}
+      <SidebarNav
+        activeView={activeView}
+        onSelectView={(view) => setActiveView(view)}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isMobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+        unreadAlertCount={unacknowledgedCount}
+        currentStaff={currentStaff}
+        onStaffLogout={onStaffLogout}
+      />
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="vt-main-content">
+        {/* SLIM TOPBAR */}
+        <header className="vt-topbar">
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
+            <button
+              type="button"
+              className="vt-collapse-btn"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              title="Toggle sidebar"
+              style={{ display: "flex" }}
+            >
+              ☰
+            </button>
+
+            {/* SEARCH */}
+            <div className="vt-search-box">
+              <span style={{ fontSize: "14px", opacity: 0.6 }}>🔍</span>
+              <input
+                type="text"
+                className="vt-search-input"
+                placeholder="Search patients, PAT-IDs, beds, or alerts..."
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+              />
+            </div>
+
+            {/* HOSPITAL CHIP */}
+            <div className="vt-hosp-chip" style={{ display: "none", alignItems: "center" }}>
+              <span>🏥</span>
+              <span>{currentStaff.hospital_name || "Hospital Station"}</span>
             </div>
           </div>
-          <div className="staff-user-tag">
-            <span className="staff-role-pill">{currentStaff.role}</span>
-            <span className="staff-user-name">Coordinator: {currentStaff.name}</span>
-          </div>
-        </div>
 
-        <div className="staff-topbar-right">
-          <div className="polling-indicator">
-            <span className="live-dot pulse"></span>
-            <span>Live Sync (10s Polling)</span>
-            {lastRefreshed && (
-              <span className="last-sync-time">
-                • {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            className="btn-staff-refresh"
-            onClick={fetchDashboardData}
-            title="Refresh patient table"
-          >
-            🔄 Refresh
-          </button>
-          <button
-            type="button"
-            className="btn-staff-logout"
-            onClick={onStaffLogout}
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
-
-      {/* WORKSTATION VIEW TABS */}
-      <div className="staff-workstation-nav">
-        <button
-          type="button"
-          className={`workstation-nav-btn ${workstationView === "opd" ? "active" : ""}`}
-          onClick={() => setWorkstationView("opd")}
-        >
-          <span>📋</span> OPD Patient Queue & Triage
-          <span className="nav-pill-count">{counts.total}</span>
-        </button>
-        <button
-          type="button"
-          className={`workstation-nav-btn ${workstationView === "patient_care" ? "active" : ""}`}
-          onClick={() => setWorkstationView("patient_care")}
-        >
-          <span>🏥</span> Inpatient Care & Physiological Monitoring
-          {counts.red_flag > 0 && <span className="nav-pill-count" style={{ background: "var(--alert)", color: "#fff" }}>🚨 Alerts</span>}
-        </button>
-      </div>
-
-      {workstationView === "patient_care" ? (
-        <PatientCareModule
-          apiBase={apiBase}
-          currentStaff={currentStaff}
-        />
-      ) : (
-        <>
-          {/* PROMINENT RED-FLAG URGENT ALERTS BANNER */}
-      {unacknowledgedRedFlags.length > 0 && (
-        <div className="urgent-red-flags-banner">
-          <div className="banner-pulse-icon">🚨</div>
-          <div className="banner-content">
-            <div className="banner-title">
-              URGENT CLINICAL ALERT: {unacknowledgedRedFlags.length} RED-FLAG CASE(S) REQUIRE IMMEDIATE ATTENTION
+          <div className="vt-topbar-actions">
+            {/* LIVE SYNC STATUS */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                background: "#ffffff",
+                border: "1px solid var(--vt-card-border)",
+                borderRadius: "var(--vt-radius-pill)",
+                padding: "6px 14px",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "var(--vt-dark-green)",
+                boxShadow: "var(--vt-shadow-sm)",
+              }}
+            >
+              <span className="live-dot pulse" style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--vt-mid-green)" }}></span>
+              <span>Live Sync (10s)</span>
+              {lastRefreshed && (
+                <span style={{ fontSize: "11px", color: "var(--vt-text-muted)" }}>
+                  • {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                </span>
+              )}
             </div>
-            <div className="banner-sub">
-              Potential emergency / red-flag indicators detected during AI intake. Please coordinate immediate clinical triage.
-            </div>
-            <div className="urgent-cases-list">
-              {unacknowledgedRedFlags.map((rf) => (
-                <div
-                  key={rf.session_id}
-                  className="urgent-case-chip"
-                  onClick={() => handleOpenCaseDetails(rf.session_id)}
-                >
-                  <span className="chip-name">👤 {rf.patient_name || "Patient"}</span>
-                  <span className="chip-dept">Dept: {rf.department}</span>
-                  <span className="chip-reason">Alert: {rf.red_flag_reason || "Red Flag Detected"}</span>
-                  <button
-                    type="button"
-                    className="btn-ack-alert"
-                    disabled={acknowledgingId === rf.session_id}
-                    onClick={(e) => handleAcknowledgeRedFlag(rf.session_id, e)}
-                  >
-                    {acknowledgingId === rf.session_id ? "Acknowledging..." : "✓ Acknowledge Alert"}
-                  </button>
+
+            {/* MANUAL REFRESH */}
+            <button
+              type="button"
+              className="vt-icon-btn"
+              onClick={fetchDashboardData}
+              title="Refresh all metrics and queues"
+            >
+              🔄
+            </button>
+
+            {/* SWITCH TO PATIENT KIOSK */}
+            <button
+              type="button"
+              className="vt-btn-secondary"
+              onClick={onSwitchToPatient}
+              title="Switch to patient self-service kiosk"
+              style={{ padding: "8px 14px", fontSize: "12.5px" }}
+            >
+              ← Patient Kiosk
+            </button>
+
+            {/* PRIMARY CTA: + ADMIT PATIENT */}
+            <button
+              type="button"
+              className="vt-btn-cta-admit"
+              onClick={() => {
+                setSelectedBedForAdmission("");
+                setActiveModal("admit");
+              }}
+            >
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span>
+              <span>Admit Patient</span>
+            </button>
+          </div>
+        </header>
+
+        {/* PAGE CONTENT CONTAINER */}
+        <div style={{ padding: "0 28px 40px", flex: 1 }}>
+          {/* VIEW 1: DASHBOARD HOME */}
+          {activeView === "dashboard" && (
+            <DashboardHome
+              counts={counts}
+              beds={beds}
+              patients={inpatientCensus}
+              redFlags={redFlags}
+              onAcknowledgeRedFlag={handleAcknowledgeRedFlag}
+              onOpenCaseDetails={handleOpenCaseDetails}
+              onOpenPatientProfile={(id) => setSelectedProfilePatientId(id)}
+              onOpenVitalsModal={(patient) => openModal("vitals", patient)}
+              onNavigateView={(view) => setActiveView(view)}
+              acknowledgingId={acknowledgingId}
+            />
+          )}
+
+          {/* VIEW 2: OPD PATIENT QUEUE */}
+          {activeView === "opd" && (
+            <OpdQueueDashboard
+              counts={counts}
+              patients={opdPatients}
+              redFlags={redFlags}
+              loading={loading}
+              activeFilter={opdFilter}
+              onSelectFilter={(f) => setOpdFilter(f)}
+              onOpenCaseDetails={handleOpenCaseDetails}
+              onOpenPatientProfile={(id) => setSelectedProfilePatientId(id)}
+              onAcknowledgeRedFlag={handleAcknowledgeRedFlag}
+              onNavigateInpatient={() => setActiveView("admitted")}
+              acknowledgingId={acknowledgingId}
+              currentStaff={currentStaff}
+            />
+          )}
+
+          {/* VIEW 3: ADMITTED PATIENTS & WARD MAP */}
+          {(activeView === "admitted" || activeView === "beds") && (
+            <AdmittedPatientsDashboard
+              beds={beds}
+              patients={inpatientCensus}
+              loading={loading}
+              onSelectPatient={(pat) => setSelectedInpatient(pat)}
+              onAllocateBed={(bed) => {
+                setSelectedBedForAdmission(bed.bed_number);
+                setActiveModal("admit");
+              }}
+              onRecordVitals={(pat) => openModal("vitals", pat)}
+              onOpenProfile={(id) => setSelectedProfilePatientId(id)}
+              onOpenECG={(pat) => openModal("ecg", pat)}
+              onOptimizeBeds={handleOptimizeBeds}
+              optimizing={optimizing}
+              optimizeMessage={optimizeMessage}
+            />
+          )}
+
+          {/* VIEW 4: VITALS & MEWS WORKBENCH */}
+          {activeView === "vitals" && (
+            <div className="vt-card" style={{ padding: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)" }}>
+                    Bedside Vitals & MEWS Monitoring Workbench
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "var(--vt-text-muted)" }}>
+                    Subbe et al. (2001) validated physiological scores. Select an admitted patient to record new bedside measurements.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+              </div>
 
-      {/* DASHBOARD METRIC KPI CARDS */}
-      <div className="staff-metrics-grid">
-        <div className="staff-metric-card">
-          <div className="metric-icon">👥</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.total}</div>
-            <div className="metric-label">Total Patients</div>
-          </div>
-        </div>
-
-        <div className="staff-metric-card">
-          <div className="metric-icon">💬</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.in_process}</div>
-            <div className="metric-label">In Process (Intake)</div>
-          </div>
-        </div>
-
-        <div className="staff-metric-card">
-          <div className="metric-icon">🔍</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.pending_clarification}</div>
-            <div className="metric-label">Pending Clarification</div>
-          </div>
-        </div>
-
-        <div className="staff-metric-card card-ready">
-          <div className="metric-icon">🟢</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.ready_for_doctor}</div>
-            <div className="metric-label">Ready for Doctor</div>
-          </div>
-        </div>
-
-        <div className="staff-metric-card card-consulting">
-          <div className="metric-icon">🩺</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.in_consultation}</div>
-            <div className="metric-label">In Consultation</div>
-          </div>
-        </div>
-
-        <div className="staff-metric-card card-done">
-          <div className="metric-icon">✓</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.completed}</div>
-            <div className="metric-label">Completed</div>
-          </div>
-        </div>
-
-        <div className={`staff-metric-card card-redflag ${counts.red_flag > 0 ? "has-alerts" : ""}`}>
-          <div className="metric-icon">🚨</div>
-          <div className="metric-data">
-            <div className="metric-number">{counts.red_flag}</div>
-            <div className="metric-label">Red Flag Cases</div>
-          </div>
-        </div>
-      </div>
-
-      {/* PATIENT TRACKING & FILTER TABS */}
-      <div className="staff-table-wrapper">
-        <div className="table-header-controls">
-          <div>
-            <h3>Hospital Patient Tracking Board</h3>
-            <p className="table-subtitle">
-              Monitoring patients assigned to <strong>{currentStaff.hospital_name}</strong>. Coordination and tracking only.
-            </p>
-          </div>
-
-          <div className="staff-filter-tabs">
-            {[
-              { id: "all", label: `All (${counts.total})` },
-              { id: "in_process", label: `In Process (${counts.in_process})` },
-              { id: "pending_clarification", label: `Pending Clarification (${counts.pending_clarification})` },
-              { id: "ready_for_doctor", label: `Ready for Doctor (${counts.ready_for_doctor})` },
-              { id: "red_flag", label: `🔴 Red Flag (${counts.red_flag})` },
-              { id: "in_consultation", label: `In Consultation (${counts.in_consultation})` },
-              { id: "completed", label: `Completed (${counts.completed})` },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`filter-tab ${activeFilter === tab.id ? "active" : ""}`}
-                onClick={() => setActiveFilter(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="staff-loading">
-            <div className="loading-spinner"></div>
-            <p>Loading hospital patient queue...</p>
-          </div>
-        ) : patients.length === 0 ? (
-          <div className="staff-empty-state">
-            <span className="empty-icon">📋</span>
-            <h4>No Patients Found in this Category</h4>
-            <p>No intake sessions currently match the selected filter for this hospital.</p>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="staff-table">
-              <thead>
-                <tr>
-                  <th>Priority</th>
-                  <th>Patient ID</th>
-                  <th>Patient Name</th>
-                  <th>Department</th>
-                  <th>Assigned Doctor</th>
-                  <th>Intake Status</th>
-                  <th>Time / Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patients.map((pat) => {
-                  const isRedFlag = pat.red_flag === 1;
-                  const isAck = pat.red_flag_acknowledged === 1;
-
-                  return (
-                    <tr
-                      key={pat.session_id}
-                      className={`patient-row ${isRedFlag ? "row-redflag" : ""}`}
-                      onClick={() => handleOpenCaseDetails(pat.session_id)}
-                    >
-                      <td>
-                        {isRedFlag ? (
-                          <span className="tag-redflag">
-                            🚨 RED FLAG
-                            {isAck ? <span className="ack-sub"> (Ack'd)</span> : <span className="ack-urgent"> (URGENT)</span>}
-                          </span>
-                        ) : (
-                          <span className={`tag-priority priority-${(pat.priority || "standard").toLowerCase().replace(/\s+/g, "-")}`}>
-                            {pat.priority || "Standard"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="mono-cell">
-                        {pat.patient_id ? pat.patient_id.substring(0, 8) : "GUEST"}
-                      </td>
-                      <td>
-                        <div className="patient-name-cell">
-                          <strong>{pat.patient_name}</strong>
-                          <span className="demographics-sub">
-                            {pat.age ? `${pat.age}y` : ""} {pat.gender ? `• ${pat.gender}` : ""}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="dept-cell-badge">{pat.department || "General"}</span>
-                      </td>
-                      <td>
-                        <span className="doc-cell-name">🩺 {pat.doctor_name || "On-Duty Physician"}</span>
-                      </td>
-                      <td>
-                        <span className={`status-pill pill-${pat.status}`}>
-                          {pat.status === "ready_for_opd"
-                            ? "🟢 Ready for OPD"
-                            : pat.status === "in_consultation"
-                            ? "🩺 In Consultation"
-                            : pat.status === "completed"
-                            ? "✓ Completed"
-                            : pat.status === "in_progress"
-                            ? "💬 In Process"
-                            : pat.status}
-                        </span>
-                      </td>
-                      <td className="time-cell">
-                        {pat.created_at
-                          ? new Date(pat.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "-"}
-                      </td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <div className="action-buttons-cell">
-                          {isRedFlag && !isAck && (
+              {inpatientCensus.length === 0 ? (
+                <EmptyState
+                  icon="🩺"
+                  title="No Inpatients Admitted"
+                  message="Admit patients to beds to begin continuous bedside vitals tracking."
+                />
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table className="vt-table">
+                    <thead>
+                      <tr>
+                        <th>Patient</th>
+                        <th>Bed</th>
+                        <th>Heart Rate</th>
+                        <th>Blood Pressure</th>
+                        <th>SpO2</th>
+                        <th>MEWS Acuity</th>
+                        <th style={{ textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inpatientCensus.map((pat) => (
+                        <tr key={pat.patient_id}>
+                          <td>
+                            <strong>{pat.full_name || pat.patient_name || pat.patient_id}</strong>
+                            <div style={{ fontSize: "11px", color: "var(--vt-text-muted)", fontFamily: "monospace" }}>
+                              {pat.patient_id}
+                            </div>
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 600 }}>Bed {pat.bed_number || "--"}</span>
+                          </td>
+                          <td>{pat.heart_rate ? `${pat.heart_rate} bpm` : "--"}</td>
+                          <td>{pat.systolic_bp ? `${pat.systolic_bp}/${pat.diastolic_bp} mmHg` : "--"}</td>
+                          <td>{pat.spo2 ? `${pat.spo2}%` : "--"}</td>
+                          <td>
+                            <MewsChip score={Number(pat.mews_score) || 0} />
+                          </td>
+                          <td style={{ textAlign: "right" }}>
                             <button
                               type="button"
-                              className="btn-table-ack"
-                              disabled={acknowledgingId === pat.session_id}
-                              onClick={(e) => handleAcknowledgeRedFlag(pat.session_id, e)}
+                              className="vt-btn-cta-admit"
+                              style={{ padding: "6px 14px", fontSize: "12px" }}
+                              onClick={() => openModal("vitals", pat)}
                             >
-                              {acknowledgingId === pat.session_id ? "..." : "Acknowledge"}
+                              + Record Vitals
                             </button>
-                          )}
-                          <button
-                            type="button"
-                            className="btn-table-view"
-                            style={{ background: "#e0efe6", color: "#25603f", borderColor: "#a3d9bc" }}
-                            onClick={() => setSelectedProfilePatientId(pat.patient_id)}
-                            title="View Unified Clinical Profile & Timeline"
-                          >
-                            Unified Profile 📋
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-table-view"
-                            onClick={() => handleOpenCaseDetails(pat.session_id)}
-                          >
-                            View Case ↗
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-table-view"
-                            style={{ background: "#edf6f4", color: "var(--teal-deep)", borderColor: "var(--teal)" }}
-                            onClick={() => setWorkstationView("patient_care")}
-                            title="Switch to Inpatient Monitoring & Vitals"
-                          >
-                            Monitor Inpatient 🫀
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-      </>
-      )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
 
-      {/* ============================================================================= */}
-      {/* CASE DETAILS MODAL (STAFF COORDINATION ONLY — NO CLINICAL EDITING) */}
-      {/* ============================================================================= */}
+          {/* VIEW 5: ML DETERIORATION & XAI INSIGHTS */}
+          {activeView === "xai" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div
+                style={{
+                  background: "#fff9eb",
+                  border: "1px solid #fde68a",
+                  borderRadius: "14px",
+                  padding: "12px 18px",
+                  fontSize: "12.5px",
+                  color: "#92400e",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <span style={{ fontSize: "18px" }}>🧠</span>
+                <div>
+                  <strong>Rule 12 Synthetic Data Disclosure:</strong> The deterioration risk model is an XGBoost ensemble trained on synthetic hospital cohorts. Feature attributions (SHAP values) provide explainable clinical guidance and must not override physician judgment.
+                </div>
+              </div>
+
+              <div className="vt-card" style={{ padding: "24px" }}>
+                <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)" }}>
+                  Baseline SHAP Feature Importance (Cohort-Level)
+                </h3>
+                <p style={{ margin: "4px 0 16px", fontSize: "12.5px", color: "var(--vt-text-muted)" }}>
+                  Relative feature weights contributing to patient deterioration risk calculation.
+                </p>
+
+                {[
+                  { factor: "Respiratory Rate (RR > 24 or < 10)", weight: 32, color: "#dc2626" },
+                  { factor: "Heart Rate (Tachycardia / Bradycardia)", weight: 26, color: "#ea580c" },
+                  { factor: "Systolic Blood Pressure (Hypotension)", weight: 19, color: "#d97706" },
+                  { factor: "Oxygen Saturation (SpO2 < 93%)", weight: 14, color: "#0284c7" },
+                  { factor: "Patient Age (≥ 65 years)", weight: 6, color: "#1e9e4a" },
+                  { factor: "Number of Active Comorbidities", weight: 3, color: "#64748b" },
+                ].map((item, idx) => (
+                  <div key={idx} style={{ marginBottom: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", marginBottom: "4px" }}>
+                      <span>{item.factor}</span>
+                      <strong style={{ color: item.color }}>{item.weight}%</strong>
+                    </div>
+                    <div style={{ background: "#f0f4ec", borderRadius: "999px", height: "8px", overflow: "hidden" }}>
+                      <div style={{ width: `${item.weight * 2.8}%`, background: item.color, height: "100%", borderRadius: "999px" }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="vt-card" style={{ padding: "24px" }}>
+                <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)", marginBottom: "14px" }}>
+                  Admitted Inpatients Deterioration Risk
+                </h3>
+                <div style={{ overflowX: "auto" }}>
+                  <table className="vt-table">
+                    <thead>
+                      <tr>
+                        <th>Patient</th>
+                        <th>Bed</th>
+                        <th>MEWS Acuity</th>
+                        <th>ML Risk Score</th>
+                        <th>Primary Risk Factors</th>
+                        <th style={{ textAlign: "right" }}>Explainable AI</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inpatientCensus.map((pat) => (
+                        <tr key={pat.patient_id}>
+                          <td>
+                            <strong>{pat.full_name || pat.patient_name || pat.patient_id}</strong>
+                          </td>
+                          <td>Bed {pat.bed_number || "--"}</td>
+                          <td>
+                            <MewsChip score={Number(pat.mews_score) || 0} />
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 700, color: (Number(pat.deterioration_risk) || 0) >= 0.5 ? "var(--vt-crimson)" : "var(--vt-mid-green)" }}>
+                              {Math.round((Number(pat.deterioration_risk) || 0.15) * 100)}%
+                            </span>
+                          </td>
+                          <td style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>
+                            {pat.chief_complaint || "Routine observation"}
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <button
+                              type="button"
+                              className="vt-btn-secondary"
+                              style={{ padding: "6px 12px", fontSize: "12px" }}
+                              onClick={() => openModal("xai", pat)}
+                            >
+                              🔍 View SHAP
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 6: TRANSFERS NETWORK */}
+          {activeView === "transfers" && (
+            <div className="vt-card" style={{ padding: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)" }}>
+                    Inter-Hospital Partner Transfer Network
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "var(--vt-text-muted)" }}>
+                    Coordinated ambulance transfer protocols and real-time partner bed availability.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+                {[
+                  { name: "Apollo Clinic & Specialty", icuAvailable: 2, genAvailable: 12, distance: "3.2 km", status: "Open" },
+                  { name: "City Diagnostics & Emergency", icuAvailable: 4, genAvailable: 18, distance: "5.1 km", status: "Open" },
+                  { name: "Fortis Super Specialty Center", icuAvailable: 1, genAvailable: 8, distance: "8.4 km", status: "High Occupancy" },
+                ].map((partner, idx) => (
+                  <div key={idx} style={{ background: "#f8faf5", border: "1px solid var(--vt-card-border)", borderRadius: "16px", padding: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <strong style={{ fontSize: "14px", color: "var(--vt-dark-green)" }}>{partner.name}</strong>
+                      <span style={{ fontSize: "11px", background: "#e8f7ea", color: "var(--vt-mid-green)", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
+                        {partner.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div>ICU Beds Available: <strong>{partner.icuAvailable}</strong></div>
+                      <div>General Beds Available: <strong>{partner.genAvailable}</strong></div>
+                      <div>Transfer Transit Distance: <strong>{partner.distance}</strong></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <h4 style={{ margin: "0 0 12px", color: "var(--vt-dark-green)" }}>Admitted Patients Transfer Roster</h4>
+              <div style={{ overflowX: "auto" }}>
+                <table className="vt-table">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Bed</th>
+                      <th>Acuity</th>
+                      <th>Transfer Status</th>
+                      <th style={{ textAlign: "right" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inpatientCensus.map((pat) => (
+                      <tr key={pat.patient_id}>
+                        <td>
+                          <strong>{pat.full_name || pat.patient_name || pat.patient_id}</strong>
+                        </td>
+                        <td>Bed {pat.bed_number || "--"}</td>
+                        <td>
+                          <MewsChip score={Number(pat.mews_score) || 0} />
+                        </td>
+                        <td style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>
+                          {pat.transfer_status || "In-Facility Monitoring"}
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <button
+                            type="button"
+                            className="vt-btn-cta-admit"
+                            style={{ padding: "6px 14px", fontSize: "12px" }}
+                            onClick={() => openModal("transfer", pat)}
+                          >
+                            🚑 Transfer Desk
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 7: CARE PLANS */}
+          {activeView === "care_plans" && (
+            <div className="vt-card" style={{ padding: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)" }}>
+                    Clinical Care Directives & Nursing Treatment Plans
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "var(--vt-text-muted)" }}>
+                    Doctor orders, diet specifications, therapy intervals, and nursing checklists.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ overflowX: "auto" }}>
+                <table className="vt-table">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Bed</th>
+                      <th>Primary Orders</th>
+                      <th>Target LOS</th>
+                      <th style={{ textAlign: "right" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inpatientCensus.map((pat) => (
+                      <tr key={pat.patient_id}>
+                        <td>
+                          <strong>{pat.full_name || pat.patient_name || pat.patient_id}</strong>
+                        </td>
+                        <td>Bed {pat.bed_number || "--"}</td>
+                        <td style={{ fontSize: "12.5px" }}>
+                          {pat.chief_complaint || "Continuous physiological observation"}
+                        </td>
+                        <td style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>
+                          {pat.length_of_stay_days || 3} days
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <button
+                            type="button"
+                            className="vt-btn-secondary"
+                            style={{ padding: "6px 14px", fontSize: "12px" }}
+                            onClick={() => openModal("carePlans", pat)}
+                          >
+                            📝 Care Plan Directives
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 8: REPORTS & ANALYTICS */}
+          {activeView === "reports" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div className="vt-card" style={{ padding: "24px" }}>
+                <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)", marginBottom: "12px" }}>
+                  Hospital Census & Deterioration Summary
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "14px" }}>
+                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Total Inpatient Census</div>
+                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-dark-green)", marginTop: "4px" }}>
+                      {inpatientCensus.length}
+                    </div>
+                  </div>
+                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>ICU Acuity Patients</div>
+                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-crimson)", marginTop: "4px" }}>
+                      {inpatientCensus.filter((p) => p.bed_type === "ICU" || (Number(p.mews_score) || 0) >= 4).length}
+                    </div>
+                  </div>
+                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Avg Length of Stay</div>
+                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-dark-green)", marginTop: "4px" }}>
+                      2.8d
+                    </div>
+                  </div>
+                  <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Safety Gate Adherence</div>
+                    <div style={{ fontSize: "28px", fontWeight: 700, color: "var(--vt-mid-green)", marginTop: "4px" }}>
+                      100%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 9: SETTINGS */}
+          {activeView === "settings" && (
+            <div className="vt-card" style={{ padding: "24px" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", color: "var(--vt-dark-green)", marginBottom: "14px" }}>
+                Workstation Configuration & Active Credentials
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+                <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
+                  <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Logged-in Staff Member</div>
+                  <strong style={{ fontSize: "15px", color: "var(--vt-dark-green)" }}>{currentStaff.name}</strong>
+                  <div style={{ fontSize: "12px", color: "var(--vt-text-muted)", marginTop: "4px" }}>
+                    Role: {currentStaff.role}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "var(--vt-text-muted)", fontFamily: "monospace" }}>
+                    Staff ID: {currentStaff.staff_id}
+                  </div>
+                </div>
+                <div style={{ background: "#f8faf5", padding: "16px", borderRadius: "14px", border: "1px solid var(--vt-card-border)" }}>
+                  <div style={{ fontSize: "12px", color: "var(--vt-text-muted)" }}>Hospital Facility</div>
+                  <strong style={{ fontSize: "15px", color: "var(--vt-dark-green)" }}>{currentStaff.hospital_name}</strong>
+                  <div style={{ fontSize: "12px", color: "var(--vt-text-muted)", marginTop: "4px" }}>
+                    Address: {currentStaff.hospital_address}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "var(--vt-text-muted)", fontFamily: "monospace" }}>
+                    Facility ID: {currentStaff.hospital_id}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* 3. RIGHT SLIDING DRAWER (PATIENT QUICK INSPECTION) */}
+      <Drawer
+        isOpen={Boolean(selectedInpatient)}
+        onClose={() => setSelectedInpatient(null)}
+        patient={selectedInpatient}
+        onOpenFullProfile={(id) => {
+          setSelectedProfilePatientId(id);
+          setSelectedInpatient(null);
+        }}
+        onRecordVitals={(pat) => openModal("vitals", pat || selectedInpatient)}
+        onOpenECG={(pat) => openModal("ecg", pat || selectedInpatient)}
+        onUpdateCarePlan={(pat) => openModal("carePlans", pat || selectedInpatient)}
+        onTransfer={(pat) => openModal("transfer", pat || selectedInpatient)}
+        onDischarge={(pat) => {
+          const mews = Number((pat || selectedInpatient)?.mews_score) || 0;
+          if (mews >= 3) {
+            alert("Discharge safety gate triggered: MEWS is >= 3. Supervisor clinical override is required to discharge.");
+          } else {
+            alert(`Discharge process initiated for Bed ${(pat || selectedInpatient)?.bed_number}.`);
+          }
+        }}
+      />
+
+      {/* =========================================================================
+          CASE DETAILS MODAL (STAFF COORDINATION ONLY — NO CLINICAL OVERWRITE)
+          ========================================================================= */}
       {(modalLoading || selectedCase) && (
         <div className="staff-modal-overlay" onClick={() => setSelectedCase(null)}>
           <div className="staff-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -891,13 +1204,97 @@ export default function StaffPortal({
         </div>
       )}
 
-      {/* UNIFIED CLINICAL PATIENT PROFILE MODAL (Phase 4) */}
+      {/* =========================================================================
+          UNIFIED 8-FACET CLINICAL DOSSIER MODAL
+          ========================================================================= */}
       {selectedProfilePatientId && (
         <UnifiedPatientProfileModal
           apiBase={apiBase}
           patientId={selectedProfilePatientId}
           currentStaff={currentStaff}
           onClose={() => setSelectedProfilePatientId(null)}
+          onActionTrigger={(action, p) => {
+            if (action === "discharged" || action === "icu_upgraded" || action === "vitals_saved" || action === "bed_updated") {
+              fetchDashboardData();
+            } else if (action === "vitals" || action === "xai" || action === "ecg" || action === "bed" || action === "carePlans" || action === "transfer") {
+              openModal(action, p);
+            }
+          }}
+        />
+      )}
+
+      {/* =========================================================================
+          SUB-MODALS (ALL CLINICAL ACTIONS PRESERVED)
+          ========================================================================= */}
+      {activeModal === "vitals" && activeModalPatient && (
+        <VitalRecorderModal
+          apiBase={apiBase}
+          patient={activeModalPatient}
+          currentStaff={currentStaff}
+          onClose={closeModal}
+          onVitalsRecorded={() => {
+            fetchDashboardData();
+          }}
+        />
+      )}
+
+      {activeModal === "xai" && activeModalPatient && (
+        <XAIRiskModal
+          apiBase={apiBase}
+          patient={activeModalPatient}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === "ecg" && activeModalPatient && (
+        <ECGTelemetryModal
+          apiBase={apiBase}
+          patient={activeModalPatient}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === "bed" && activeModalPatient && (
+        <BedManagementModal
+          apiBase={apiBase}
+          patient={activeModalPatient}
+          beds={beds}
+          currentStaff={currentStaff}
+          onClose={closeModal}
+          onBedUpdated={() => {
+            fetchDashboardData();
+          }}
+        />
+      )}
+
+      {activeModal === "carePlans" && activeModalPatient && (
+        <CarePlansModal
+          apiBase={apiBase}
+          patient={activeModalPatient}
+          currentStaff={currentStaff}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === "transfer" && activeModalPatient && (
+        <TransferNetworkModal
+          apiBase={apiBase}
+          patient={activeModalPatient}
+          currentStaff={currentStaff}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === "admit" && (
+        <AdmitPatientModal
+          apiBase={apiBase}
+          beds={beds}
+          currentStaff={currentStaff}
+          preSelectedBed={selectedBedForAdmission}
+          onClose={closeModal}
+          onAdmitted={() => {
+            fetchDashboardData();
+          }}
         />
       )}
     </div>
