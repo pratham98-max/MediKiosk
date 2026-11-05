@@ -12,6 +12,10 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from groq import Groq
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 from pydantic import BaseModel
 
 from app.services.ocr_service import extract_text_from_image
@@ -66,13 +70,31 @@ from database import (
 
 load_dotenv()
 
+XAI_API_KEY = os.getenv("XAI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-client = Groq(
-    api_key=GROQ_API_KEY or "gsk_placeholder_for_local_dev"
-)
-
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+if XAI_API_KEY and OpenAI is not None:
+    client = OpenAI(
+        api_key=XAI_API_KEY,
+        base_url="https://api.x.ai/v1"
+    )
+    GROQ_MODEL = os.getenv("XAI_MODEL", "grok-2-latest")
+    LLM_PROVIDER = "xAI Grok"
+    print(f"[AI Engine] Initialized xAI Grok provider with model {GROQ_MODEL}")
+elif GROQ_API_KEY:
+    client = Groq(
+        api_key=GROQ_API_KEY
+    )
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    LLM_PROVIDER = "Groq Cloud"
+    print(f"[AI Engine] Initialized Groq provider with model {GROQ_MODEL}")
+else:
+    client = Groq(
+        api_key="gsk_placeholder_for_local_dev"
+    )
+    GROQ_MODEL = "llama-3.3-70b-versatile"
+    LLM_PROVIDER = "Local Fallback"
+    print("[AI Engine] Running in local fallback mode.")
 
 
 # =========================
