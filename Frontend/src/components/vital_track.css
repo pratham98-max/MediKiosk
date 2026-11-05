@@ -997,13 +997,23 @@
 }
 
 @keyframes slideDrawer {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* =============================================================================
@@ -1538,8 +1548,17 @@
 }
 
 @keyframes vtPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.6; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.6;
+  }
 }
 
 .vt-topbar-icon-btn {
@@ -3203,9 +3222,17 @@
   color: #b91c1c;
 }
 
-.text-red { color: #dc2626; }
-.text-amber { color: #d97706; }
-.text-green { color: #16a34a; }
+.text-red {
+  color: #dc2626;
+}
+
+.text-amber {
+  color: #d97706;
+}
+
+.text-green {
+  color: #16a34a;
+}
 
 .inpatient-xai-cell {
   display: inline-flex;
@@ -3565,9 +3592,17 @@
   line-height: 1.1;
 }
 
-.bed-metric-val.occupied { color: #dc2626; }
-.bed-metric-val.available { color: #16a34a; }
-.bed-metric-val.maintenance { color: #d97706; }
+.bed-metric-val.occupied {
+  color: #dc2626;
+}
+
+.bed-metric-val.available {
+  color: #16a34a;
+}
+
+.bed-metric-val.maintenance {
+  color: #d97706;
+}
 
 /* BED MGMT SPLIT LAYOUT (LEFT 7fr : RIGHT 3fr) */
 .bed-mgmt-split-layout {
@@ -4168,12 +4203,35 @@
   place-items: center;
 }
 
-.vitals-metric-icon-wrap.hr { background: #fee2e2; color: #dc2626; }
-.vitals-metric-icon-wrap.bp { background: #ede9fe; color: #7c3aed; }
-.vitals-metric-icon-wrap.spo2 { background: #e0f2fe; color: #0284c7; }
-.vitals-metric-icon-wrap.temp { background: #fef3c7; color: #d97706; }
-.vitals-metric-icon-wrap.rr { background: #f0fdf4; color: #16a34a; }
-.vitals-metric-icon-wrap.mews { background: #f4f7f1; color: var(--vt-primary-green); }
+.vitals-metric-icon-wrap.hr {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.vitals-metric-icon-wrap.bp {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.vitals-metric-icon-wrap.spo2 {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.vitals-metric-icon-wrap.temp {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.vitals-metric-icon-wrap.rr {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.vitals-metric-icon-wrap.mews {
+  background: #f4f7f1;
+  color: var(--vt-primary-green);
+}
 
 .vitals-metric-name {
   font-size: 12px;
@@ -4205,9 +4263,17 @@
   font-weight: 700;
 }
 
-.vitals-metric-status.normal { color: #16a34a; }
-.vitals-metric-status.warn { color: #d97706; }
-.vitals-metric-status.danger { color: #dc2626; }
+.vitals-metric-status.normal {
+  color: #16a34a;
+}
+
+.vitals-metric-status.warn {
+  color: #d97706;
+}
+
+.vitals-metric-status.danger {
+  color: #dc2626;
+}
 
 .vitals-chart-card {
   border: 1px solid #e4ecda;
