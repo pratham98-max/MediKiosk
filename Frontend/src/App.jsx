@@ -11,7 +11,10 @@ import ExternalEMRConsent from "./components/ExternalEMRConsent";
 import MedicalTimeline from "./components/MedicalTimeline";
 import { parseMarkdownSections, renderMarkdownBody } from "./utils/markdownRenderer";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const rawApiBase = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = (rawApiBase.startsWith("http://") || rawApiBase.startsWith("https://")
+  ? rawApiBase
+  : `https://${rawApiBase}`).replace(/\/+$/, "");
 
 function App() {
   // =========================

@@ -34,11 +34,21 @@ DB_ENV = os.environ.get("DATABASE_PATH") or os.environ.get("MEDIKIOSK_DB_PATH")
 DEFAULT_DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "medikiosk.db")
 
 def get_connection():
+    target = DEFAULT_DB
     if DB_ENV:
-        target = DB_ENV
-        parent_dir = os.path.dirname(target)
-        if parent_dir:
-            os.makedirs(parent_dir, exist_ok=True)
+        try:
+            parent_dir = os.path.dirname(DB_ENV)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            # Verify write access
+            test_file = os.path.join(parent_dir or ".", ".write_test")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            target = DB_ENV
+        except (PermissionError, OSError) as e:
+            print(f"[Database Note] Cannot write to '{DB_ENV}' ({e}). Falling back to local database '{DEFAULT_DB}'.")
+            target = DEFAULT_DB
     else:
         target = "medikiosk.db" if os.path.exists("medikiosk.db") else DEFAULT_DB
 
